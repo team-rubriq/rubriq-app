@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Rubric } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { Trash, MoreVertical, Download } from 'lucide-react';
+import * as React from 'react';
 
 interface Props {
   rows: Rubric[];
@@ -33,6 +34,11 @@ export default function RubricTable({
   onDeleteRequest,
 }: Props) {
   const router = useRouter();
+
+  const handleRowClick = (id: string) => {
+    router.push(`/edit-rubric/${id}`);
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -50,7 +56,7 @@ export default function RubricTable({
         {rows.map((r) => (
           <TableRow
             key={r.id}
-            onClick={() => router.push(`/edit-rubric/${r.id}`)}
+            onClick={() => handleRowClick(r.id)}
             tabIndex={0}
             role="button"
           >
@@ -63,7 +69,7 @@ export default function RubricTable({
             <TableCell>{new Date(r.updatedAt).toLocaleDateString()}</TableCell>
             <TableCell>
               {r.status === 'update-available' && (
-                <Badge>Update available</Badge>
+                <Badge variant={"secondary"} className="animate-pulse">Update available</Badge>
               )}
             </TableCell>
             <TableCell>

@@ -9,11 +9,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Plus, List, LayoutGrid, ChevronDown } from 'lucide-react';
-import Link from 'next/link';
 
 type SortKey = 'updated' | 'name' | 'subject';
 type FilterKey = 'all' | 'mine' | 'shared' | 'updates';

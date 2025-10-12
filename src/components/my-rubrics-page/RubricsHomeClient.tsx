@@ -6,38 +6,70 @@ import RubricsToolbar from './RubricsToolbar';
 import RubricCard from './RubricCard';
 import RubricTable from './RubricTable';
 import CreateRubricModal, { CreateRubricPayload } from './CreateRubricModal';
-import { sampleTemplates } from '@/lib/mock';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Rubric, RubricRow } from '@/lib/types';
+import { Rubric, RubricRow, RubricTemplate, TemplateRow } from '@/lib/types';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx-js-style';
 import { Plus } from 'lucide-react';
+import { RubricAPI, TemplateAPI } from '@/lib/api';
 
 type SortKey = 'updated' | 'name' | 'subject';
 type FilterKey = 'all' | 'mine' | 'shared' | 'updates';
 type ViewKey = 'grid' | 'list';
 
 interface Props {
-  initialData: Rubric[];
+  initialData?: Rubric[];
+  initialTemplates?: RubricTemplate[];
+  currentUserId?: string;
+  profileName?: string;
 }
 
-export default function RubricsHomeClient({ initialData }: Props) {
+export default function RubricsHomeClient({
+  initialData = [],
+  initialTemplates = [],
+  currentUserId,
+  profileName = '',
+}: Props) {
   const [rubrics, setRubrics] = React.useState<Rubric[]>(initialData);
+  const [templates, setTemplates] =
+    React.useState<RubricTemplate[]>(initialTemplates);
   const [query, setQuery] = React.useState('');
   const [sort, setSort] = React.useState<SortKey>('updated');
   const [filter, setFilter] = React.useState<FilterKey>('all');
   const [view, setView] = React.useState<ViewKey>('grid');
   const [loading, setLoading] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<Rubric | null>(null);
-  const lastDeletedRef = React.useRef<Rubric | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
 
-  // Simulate loading
+  // Load rubrics & templates (Supabase API call)
   React.useEffect(() => {
-    setLoading(true);
-    const t = setTimeout(() => setLoading(false), 600); // fake shimmer time
-    return () => clearTimeout(t);
+    let alive = true;
+
+    if (initialData.length && initialTemplates.length) return;
+
+    (async () => {
+      try {
+        setLoading(true);
+        const [list, tpls] = await Promise.all([
+          initialData.length ? Promise.resolve(initialData) : RubricAPI.list(),
+          initialTemplates.length
+            ? Promise.resolve(initialTemplates)
+            : TemplateAPI.list(),
+        ]);
+        if (!alive) return;
+        setRubrics(list);
+        setTemplates(tpls);
+      } catch (e: any) {
+        toast.error('Failed to load data', { description: e.message });
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   // Display filtered, searched, and sorted rubrics
@@ -48,7 +80,12 @@ export default function RubricsHomeClient({ initialData }: Props) {
     rows = rows.filter((r) => {
       if (filter === 'updates') return r.status === 'update-available';
       if (filter === 'shared') return !!r.shared;
-      if (filter === 'mine') return r.ownerId === 'me' && !r.shared;
+      if (filter === 'mine') {
+        // If currentUserId is provided, use it; else treat "mine" as "not shared"
+        return currentUserId
+          ? r.ownerId === currentUserId && !r.shared
+          : !r.shared;
+      }
       return true;
     });
 
@@ -76,140 +113,147 @@ export default function RubricsHomeClient({ initialData }: Props) {
     });
 
     return rows;
-  }, [rubrics, query, sort, filter]);
+  }, [rubrics, query, sort, filter, currentUserId]);
 
   // Export rubric handler (export to XLSX)
-  const handleExport = (id: string) => {
-    const r = rubrics.find((x) => x.id === id);
-    if (!r) return;
-
-    // Prepare data for Excel: header + rows
-    const rubricHeaders = [
-      'Task',
-      'AI Use Level',
-      'Instructions',
-      'Examples',
-      'Acknowledgement',
-    ];
-
-    const studentHeaders = [
-      'AI Tools Used',
-      'Purpose and Usage',
-      'Key Prompts Used (if any)',
-    ];
-
-    const headerRow1 = [
-      ...rubricHeaders,
-      'Student Declaration (please complete this section)',
-      '',
-      '',
-    ];
-
-    const headerRow2 = [
-      ...Array(rubricHeaders.length).fill(''),
-      ...studentHeaders,
-    ];
-
-    const dataRows = r.rows.map((row) => [
-      row.task,
-      row.aiUseLevel,
-      row.instructions,
-      row.examples,
-      row.acknowledgement,
-      '', // AI tools used
-      '', // Purpose and usage
-      '', // Key prompts
-    ]);
-
-    const data = [headerRow1, headerRow2, ...dataRows];
-
-    // Create worksheet
-    const worksheet = XLSX.utils.aoa_to_sheet(data);
-
-    worksheet['!merges'] = [
-      ...rubricHeaders.map((_, idx) => ({
-        s: { r: 0, c: idx },
-        e: { r: 1, c: idx },
-      })),
-      {
-        s: { r: 0, c: rubricHeaders.length }, // start at first student declaration col
-        e: { r: 0, c: rubricHeaders.length + 2 }, // end at last student declaration col
-      },
-    ];
-
-    // Assign column widths (in characters)
-    worksheet['!cols'] = [
-      { wch: 56 }, // Task
-      { wch: 38 }, // AI Use Level
-      { wch: 35 }, // Instructions
-      { wch: 80 }, // Examples
-      { wch: 34 }, // Acknowledgement
-      { wch: 28 }, // AI Tools Used (Student Declaration)
-      { wch: 28 }, // Purpose and Usage (Student Declaration)
-      { wch: 28 }, // Key prompts (Student Declaration)
-    ];
-
-    // Header row heights
-    worksheet['!rows'] = [{ hpt: 15 }, { hpt: 32 }];
-
-    // Style header rows
-    for (let R = 0; R < 2; ++R) {
-      for (let C = 0; C < rubricHeaders.length + studentHeaders.length; ++C) {
-        const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
-        if (!worksheet[cell_address]) continue;
-
-        const isRubricHeader = C < rubricHeaders.length;
-
-        worksheet[cell_address].s = {
-          font: {
-            bold: true,
-            color: { rgb: isRubricHeader ? 'FFFFFF' : '000000' },
-          },
-          fill: {
-            patternType: 'solid',
-            fgColor: { rgb: isRubricHeader ? '294880' : 'A9D08E' },
-          },
-          alignment: {
-            horizontal: 'center',
-            vertical: 'center',
-            wrapText: true,
-          },
-          border: {
-            top: { style: 'thin' },
-            bottom: { style: 'thin' },
-            left: { style: 'thin' },
-            right: { style: 'thin' },
-          },
-        };
+  const handleExport = async (id: string) => {
+    try {
+      const r = await RubricAPI.get(id); // ensures rows are present
+      if (!r?.rows?.length) {
+        toast.message('No rows to export yet.');
+        return;
       }
-    }
 
-    // Style data rows
-    for (let R = 2; R < data.length; ++R) {
-      for (let C = 0; C < rubricHeaders.length + studentHeaders.length; ++C) {
-        const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
-        if (!worksheet[cell_address]) continue;
-        worksheet[cell_address].s = {
-          alignment: { wrapText: true, vertical: 'top' },
-          border: {
-            top: { style: 'thin' },
-            bottom: { style: 'thin' },
-            left: { style: 'thin' },
-            right: { style: 'thin' },
-          },
-        };
+      // Prepare data for Excel: header + rows
+      const rubricHeaders = [
+        'Task',
+        'AI Use Level',
+        'Instructions',
+        'Examples',
+        'Acknowledgement',
+      ];
+
+      const studentHeaders = [
+        'AI Tools Used',
+        'Purpose and Usage',
+        'Key Prompts Used (if any)',
+      ];
+
+      const headerRow1 = [
+        ...rubricHeaders,
+        'Student Declaration (please complete this section)',
+        '',
+        '',
+      ];
+
+      const headerRow2 = [
+        ...Array(rubricHeaders.length).fill(''),
+        ...studentHeaders,
+      ];
+
+      const dataRows = r.rows.map((row) => [
+        row.task,
+        row.aiUseLevel,
+        row.instructions,
+        row.examples,
+        row.acknowledgement,
+        '', // AI tools used
+        '', // Purpose and usage
+        '', // Key prompts
+      ]);
+
+      const data = [headerRow1, headerRow2, ...dataRows];
+
+      // Create worksheet
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      worksheet['!merges'] = [
+        ...rubricHeaders.map((_, idx) => ({
+          s: { r: 0, c: idx },
+          e: { r: 1, c: idx },
+        })),
+        {
+          s: { r: 0, c: rubricHeaders.length }, // start at first student declaration col
+          e: { r: 0, c: rubricHeaders.length + 2 }, // end at last student declaration col
+        },
+      ];
+
+      // Assign column widths (in characters)
+      worksheet['!cols'] = [
+        { wch: 56 }, // Task
+        { wch: 38 }, // AI Use Level
+        { wch: 35 }, // Instructions
+        { wch: 80 }, // Examples
+        { wch: 34 }, // Acknowledgement
+        { wch: 28 }, // AI Tools Used (Student Declaration)
+        { wch: 28 }, // Purpose and Usage (Student Declaration)
+        { wch: 28 }, // Key prompts (Student Declaration)
+      ];
+
+      // Header row heights
+      worksheet['!rows'] = [{ hpt: 15 }, { hpt: 32 }];
+
+      // Style header rows
+      for (let R = 0; R < 2; ++R) {
+        for (let C = 0; C < rubricHeaders.length + studentHeaders.length; ++C) {
+          const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!worksheet[cell_address]) continue;
+
+          const isRubricHeader = C < rubricHeaders.length;
+
+          worksheet[cell_address].s = {
+            font: {
+              bold: true,
+              color: { rgb: isRubricHeader ? 'FFFFFF' : '000000' },
+            },
+            fill: {
+              patternType: 'solid',
+              fgColor: { rgb: isRubricHeader ? '294880' : 'A9D08E' },
+            },
+            alignment: {
+              horizontal: 'center',
+              vertical: 'center',
+              wrapText: true,
+            },
+            border: {
+              top: { style: 'thin' },
+              bottom: { style: 'thin' },
+              left: { style: 'thin' },
+              right: { style: 'thin' },
+            },
+          };
+        }
       }
+
+      // Style data rows
+      for (let R = 2; R < data.length; ++R) {
+        for (let C = 0; C < rubricHeaders.length + studentHeaders.length; ++C) {
+          const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!worksheet[cell_address]) continue;
+          worksheet[cell_address].s = {
+            alignment: { wrapText: true, vertical: 'top' },
+            border: {
+              top: { style: 'thin' },
+              bottom: { style: 'thin' },
+              left: { style: 'thin' },
+              right: { style: 'thin' },
+            },
+          };
+        }
+      }
+
+      // Create workbook and export
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'rubric');
+
+      // Export to file
+      XLSX.writeFile(
+        workbook,
+        `${r.name.replace(/\s+/g, '_').toLowerCase()}.xlsx`,
+      );
+    } catch (e: any) {
+      toast.error('Export failed', { description: e.message });
     }
-
-    // Create workbook and export
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'rubric');
-
-    // Export to file
-    XLSX.writeFile(
-      workbook,
-      `${r.name.replace(/\s+/g, '_').toLowerCase()}.xlsx`,
-    );
   };
 
   // Request delete: open confirmation dialog for rubric
@@ -218,104 +262,56 @@ export default function RubricsHomeClient({ initialData }: Props) {
     setDeleteTarget(item);
   };
 
-  // Confirm delete: remove rubric from state
-  const confirmDelete = () => {
+  // Confirm delete: remove rubric from state (Supabase API call)
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
     const deleted = deleteTarget;
-    lastDeletedRef.current = deleted;
+
+    // Optimistically remove it from the UI
     setRubrics((prev) => prev.filter((r) => r.id !== deleted.id));
     setDeleteTarget(null);
-    toast.success('Rubric deleted', {
-      description: `"${deleted.name}" was removed.`,
-    });
+
+    try {
+      await RubricAPI.delete(deleted.id);
+      toast.success('Rubric deleted', {
+        description: `"${deleted.name}" was permanently removed.`,
+      });
+    } catch (e: any) {
+      // Roll back if API fails
+      setRubrics((prev) => [deleted, ...prev]);
+      toast.error('Delete failed', { description: e.message });
+    }
+  };
+
+  // Create rubric handler (Supabase API call)
+  const handleCreate = async (payload: CreateRubricPayload) => {
+    try {
+      const created = await RubricAPI.create(payload);
+      setRubrics((prev) => [created, ...(prev ?? [])]);
+      setCreateOpen(false);
+      toast.success('Rubric created', {
+        description:
+          payload.mode === 'template'
+            ? payload.linkForUpdates
+              ? 'Linked to template for future updates.'
+              : 'Copied from template (not linked).'
+            : 'Started from scratch.',
+      });
+    } catch (e: any) {
+      toast.error('Create failed', { description: e.message });
+    }
   };
 
   // Total rubrics count
   const totalCount = rubrics.length;
 
-  // Create rubric handler
-  const handleCreate = (payload: CreateRubricPayload) => {
-    // purely frontend demo: add a new item locally
-    const now = new Date().toISOString();
-
-    if (payload.mode === 'scratch') {
-      // from scratch
-      const rows = Array.from({ length: payload.initialRows }, (_, i) =>
-        makeBlankRow(i),
-      );
-      const newItem: Rubric = {
-        id: `rb-${Date.now()}`,
-        name: payload.name,
-        subjectCode: payload.subjectCode,
-        rowCount: payload.initialRows,
-        version: 1,
-        updatedAt: now,
-        status: 'active',
-        ownerId: 'me',
-        shared: false,
-        rows,
-      };
-      setRubrics((prev) => [newItem, ...prev]);
-      toast.success('Rubric created', { description: `Started from scratch` });
-      return;
-    }
-
-    if (payload.mode === 'template') {
-      // from template
-      const tpl = sampleTemplates.find((t) => t.id === payload.templateId);
-      const rows = tpl
-        ? tpl.rows.map((tr) => ({
-            id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-            templateRowId: payload.linkForUpdates ? tr.id : undefined,
-            task: tr.task,
-            aiUseLevel: tr.aiUseLevel,
-            instructions: tr.instructions,
-            examples: tr.examples,
-            acknowledgement: tr.acknowledgement,
-          }))
-        : [];
-
-      const newItem: Rubric = {
-        id: `rb-${Date.now()}`,
-        name: payload.name,
-        subjectCode: payload.subjectCode,
-        rowCount:
-          sampleTemplates.find((t) => t.id === payload.templateId)?.rowCount ??
-          10,
-        version: 1,
-        templateId: payload.templateId,
-        templateVersion: sampleTemplates.find(
-          (t) => t.id === payload.templateId,
-        )?.version,
-        updatedAt: now,
-        status: 'active',
-        ownerId: 'me',
-        shared: false,
-        rows,
-      };
-      setRubrics((prev) => [newItem, ...prev]);
-      toast.success('Rubric created', {
-        description: payload.linkForUpdates
-          ? 'Linked to template for future updates.'
-          : 'Copied from template (not linked).',
-      });
-    }
-  };
-
-  const makeBlankRow = (index: number): RubricRow => ({
-    id: `row-${Date.now()}-${index}`,
-    task: '',
-    aiUseLevel: '',
-    instructions: '',
-    examples: '',
-    acknowledgement: '',
-  });
-
   return (
     <div className="relative min-h-screen">
       {/* Header */}
       <div className="absolute top-0 left-0 w-full z-10 bg-background px-10 py-3">
-        <h1 className="text-[44px] font-semibold tracking-tight">My Rubrics</h1>
+        <h1 className="text-[44px] font-semibold tracking-tight">
+          {profileName ? `Welcome, ${profileName}!` : 'My Rubrics'}
+        </h1>
         <p className="text-m text-muted-foreground">
           Create, search, and manage your rubrics.
         </p>
@@ -383,7 +379,11 @@ export default function RubricsHomeClient({ initialData }: Props) {
             </div>
           ) : (
             <div className="rounded-2xl border">
-              <RubricTable rows={filtered} onExport={handleExport} onDeleteRequest={requestDelete} />
+              <RubricTable
+                rows={filtered}
+                onExport={handleExport}
+                onDeleteRequest={requestDelete}
+              />
             </div>
           ))}
 
@@ -399,7 +399,7 @@ export default function RubricsHomeClient({ initialData }: Props) {
         <CreateRubricModal
           open={createOpen}
           onOpenChange={setCreateOpen}
-          templates={sampleTemplates}
+          templates={templates ?? []}
           onCreate={handleCreate}
         />
       </div>

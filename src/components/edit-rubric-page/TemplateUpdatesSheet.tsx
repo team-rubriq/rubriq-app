@@ -10,7 +10,6 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Separator } from '../ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Rubric, RubricRow, RubricTemplate, TemplateRow } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,7 +20,7 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   rubric: Rubric;
   template: RubricTemplate;
-  onApply: (nextRows: RubricRow[], newTemplateVersion: number) => void;
+  onApply: (selectedRubricRowIds: string[]) => void | Promise<void>;
 }
 
 export default function TemplateUpdatesSheet({
@@ -31,68 +30,70 @@ export default function TemplateUpdatesSheet({
   template,
   onApply,
 }: Props) {
-  // map template rows by id
+  // Map template rows by id
   const tmap = React.useMemo(
-    () => new Map(template.rows.map((r) => [r.id, r])),
+    () => new Map((template.rows ?? []).map((r) => [r.id, r])),
     [template.rows],
   );
 
-  // figure out which linked rows differ
-  const diffs = rubric.rows
-    .map((r, idx) => {
-      if (!r.templateRowId) return null;
-      const t = tmap.get(r.templateRowId);
-      if (!t) return null;
-      const changed =
-        r.task !== t.task ||
-        r.aiUseLevel !== t.aiUseLevel ||
-        r.instructions !== t.instructions ||
-        r.examples !== t.examples ||
-        r.acknowledgement !== t.acknowledgement;
-      return { idx, r, t, changed };
-    })
-    .filter(Boolean) as {
+  // Build diff model only for linked rows
+  type DiffItem = {
     idx: number;
+    rubricRowId: string; // rubric_rows.id (needed for RPC)
     r: RubricRow;
-    t: TemplateRow;
-    changed: boolean;
-  }[];
+    t: TemplateRow | null;
+    changed: boolean; // true if any field differs
+  };
 
-  const [selected, setSelected] = React.useState(new Set<number>());
+  // figure out which linked rows differ
+  const diffs: DiffItem[] = React.useMemo(() => {
+    return (rubric.rows ?? [])
+      .map((r, idx) => {
+        if (!r.templateRowId) {
+          return { idx, rubricRowId: r.id!, r, t: null, changed: false };
+        }
+        const t = tmap.get(r.templateRowId) ?? null;
+        const changed =
+          !!t &&
+          (r.task !== t.task ||
+            r.aiUseLevel !== t.aiUseLevel ||
+            r.instructions !== t.instructions ||
+            r.examples !== t.examples ||
+            r.acknowledgement !== t.acknowledgement);
+        return { idx, rubricRowId: r.id!, r, t, changed };
+      })
+      .filter(Boolean) as DiffItem[];
+  }, [rubric.rows, tmap]);
+
+  // Selection state uses rubricRowId
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
 
   React.useEffect(() => {
-    // pre-select all rows that differ
-    const s = new Set<number>();
+    // When sheet opens, preselect only rows that differ and have template linkage
+    if (!open) return;
+    const pre = new Set<string>();
     diffs.forEach((d) => {
-      if (d.changed) s.add(d.idx);
+      if (d.t && d.changed && d.rubricRowId) pre.add(d.rubricRowId);
     });
-    setSelected(s);
-  }, [open]);
+    setSelected(pre);
+  }, [open, diffs]);
 
-  const toggle = (i: number, checked: boolean) => {
-    const next = new Set(selected);
-    if (checked) next.add(i);
-    else next.delete(i);
-    setSelected(next);
+  const toggle = (rubricRowId: string, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(rubricRowId);
+      else next.delete(rubricRowId);
+      return next;
+    });
   };
 
-  const apply = () => {
-    const next = rubric.rows.slice();
-    selected.forEach((i) => {
-      const r = next[i];
-      const t = tmap.get(r.templateRowId!);
-      if (!t) return;
-      next[i] = {
-        ...r,
-        task: t.task,
-        aiUseLevel: t.aiUseLevel,
-        instructions: t.instructions,
-        examples: t.examples,
-        acknowledgement: t.acknowledgement,
-      };
-    });
-    onApply(next, template.version);
+  const apply = async () => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    await onApply(ids); // parent handles RPC + refresh
   };
+
+  const changedCount = diffs.filter((d) => d.t && d.changed).length;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -108,7 +109,16 @@ export default function TemplateUpdatesSheet({
               v{rubric.templateVersion ?? '?'}
             </span>
             <br />
-            Select rows to apply the newer template text.
+            {changedCount > 0 ? (
+              <span>
+                Select rows to apply the newer template text.
+                <Badge className="ml-2" variant="secondary">
+                  {changedCount} differences
+                </Badge>
+              </span>
+            ) : (
+              <span>No differnces detected for linked rows</span>
+            )}
           </SheetDescription>
         </SheetHeader>
 
@@ -116,16 +126,16 @@ export default function TemplateUpdatesSheet({
           <div className="space-y-4">
             {diffs.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No differences detected for linked rows.
+                No linked rows present.
               </p>
             )}
-            {diffs.map(({ idx, r, t, changed }) => (
-              <div key={r.id} className="rounded-xl p-3">
+            {diffs.map(({ idx, r, t, changed, rubricRowId }) => (
+              <div key={rubricRowId ?? idx} className="rounded-xl p-3">
                 <div className="flex items-center gap-2">
                   <Checkbox
-                    checked={selected.has(idx)}
-                    onCheckedChange={(v) => toggle(idx, !!v)}
-                    disabled={!changed}
+                    checked={selected.has(rubricRowId)}
+                    onCheckedChange={(v) => toggle(rubricRowId, !!v)}
+                    disabled={!t || !changed || !rubricRowId}
                   />
                   <div className="text-sm font-medium">
                     Row {idx + 1}{' '}
@@ -133,42 +143,66 @@ export default function TemplateUpdatesSheet({
                       <span className="text-muted-foreground">
                         · linked {r.templateRowId}
                       </span>
-                    ) : null}
+                    ) : (
+                      <span className="text-muted-foreground">
+                        · not linked
+                      </span>
+                    )}
                   </div>
+                  {t && changed && (
+                    <Badge className="ml-2" variant="outline">
+                      differs
+                    </Badge>
+                  )}
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <div className="font-semibold">Your rubric</div>
-                    <Field name="Task" value={r.task} />
-                    <Field name="AI Use Scale Level" value={r.aiUseLevel} />
-                    <Field
-                      name="Instructions to Students"
-                      value={r.instructions}
-                    />
-                    <Field name="Examples" value={r.examples} />
-                    <Field
-                      name="AI Use Acknowlegement"
-                      value={r.acknowledgement}
-                    />
-                  </div>
-                  <div>
-                    <div className="font-semibold">
-                      Template{' '}
-                      <span className="text-chart-5">v{template.version}</span>
+
+                {t ? (
+                  <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div className="font-semibold">
+                        Your rubric{' '}
+                        <span className="text-chart-5">
+                          v{rubric.templateVersion ?? '?'}
+                        </span>
+                      </div>
+                      <Field name="Task" value={r.task} />
+                      <Field name="AI Use Scale Level" value={r.aiUseLevel} />
+                      <Field
+                        name="Instructions to Students"
+                        value={r.instructions}
+                      />
+                      <Field name="Examples" value={r.examples} />
+                      <Field
+                        name="AI Use Acknowlegement"
+                        value={r.acknowledgement}
+                      />
                     </div>
-                    <Field name="Task" value={t.task} />
-                    <Field name="AI Use Scale Level" value={t.aiUseLevel} />
-                    <Field
-                      name="Instructions to Students"
-                      value={t.instructions}
-                    />
-                    <Field name="Examples" value={t.examples} />
-                    <Field
-                      name="AI Use Acknowlegement"
-                      value={t.acknowledgement}
-                    />
+                    <div>
+                      <div className="font-semibold">
+                        Template{' '}
+                        <span className="text-chart-5">
+                          v{template.version}
+                        </span>
+                      </div>
+                      <Field name="Task" value={t.task} />
+                      <Field name="AI Use Scale Level" value={t.aiUseLevel} />
+                      <Field
+                        name="Instructions to Students"
+                        value={t.instructions}
+                      />
+                      <Field name="Examples" value={t.examples} />
+                      <Field
+                        name="AI Use Acknowlegement"
+                        value={t.acknowledgement}
+                      />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    This rubric row is linked to a template row that no longer
+                    exists.
+                  </div>
+                )}
               </div>
             ))}
           </div>
