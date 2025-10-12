@@ -56,7 +56,7 @@ export default function CreateRubricModal({
   // "From scratch" fields
   const [name, setName] = React.useState('');
   const [subject, setSubject] = React.useState('');
-  const [rows, setRows] = React.useState<number>(1);
+  const [rows, setRows] = React.useState<number>(10);
 
   // "From template" fields
   const [templateId, setTemplateId] = React.useState<string | null>(null);
@@ -70,7 +70,7 @@ export default function CreateRubricModal({
     const tpl = templates.find((t) => t.id === templateId);
     if (tpl) {
       setTName((prev) => prev || tpl.name);
-      setTSubject((prev) => prev || tpl.subjectCode);
+      setTSubject(tpl.subjectCode);
     }
   }, [templateId, templates]);
 
@@ -167,6 +167,7 @@ export default function CreateRubricModal({
                 placeholder="e.g. COMP10001"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
+                onBlur={() => setSubject((s) => s.toUpperCase())}
               />
             </div>
             <div className="space-y-2">
@@ -177,7 +178,12 @@ export default function CreateRubricModal({
                 min={1}
                 max={50}
                 value={rows}
-                onChange={(e) => setRows(parseInt(e.target.value || '10', 10))}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  setRows(
+                    Number.isFinite(n) ? Math.max(1, Math.min(50, n)) : 10,
+                  );
+                }}
               />
             </div>
           </TabsContent>
@@ -208,7 +214,7 @@ export default function CreateRubricModal({
                   id="t-subject"
                   placeholder="e.g. COMP10001"
                   value={tSubject}
-                  onChange={(e) => setTSubject(e.target.value)}
+                  readOnly
                 />
               </div>
             </div>
@@ -221,6 +227,7 @@ export default function CreateRubricModal({
                 </p>
               </div>
               <Switch
+                disabled={!templateId}
                 checked={linkForUpdates}
                 onCheckedChange={setLinkForUpdates}
               />

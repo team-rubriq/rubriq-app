@@ -60,7 +60,7 @@ export default function LoginPage() {
         // Successful sign in!
         console.log('Sign in successful:', data.user.email);
 
-        router.push('/loginTest');
+        router.push('/my-rubrics');
       }
     } catch (err) {
       console.error('Sign in error:', err);

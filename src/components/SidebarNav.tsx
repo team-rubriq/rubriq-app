@@ -21,22 +21,26 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { createClient } from '@/app/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
 const links = [
   { href: '/my-rubrics', label: 'My Rubrics', icon: TableProperties },
   { href: '/rubric-repo', label: 'Rubric Repository', icon: PackageOpen },
 ];
 
-export default function SidebarNav() {
-  const pathname = usePathname();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+interface SidebarNavProps {
+  fullName: string;
+  avatar?: string;
+}
 
-  // Dummy user data
-  const user = {
-    name: 'John Doe',
-    avatar: '/avatar.svg', // Replace with actual avatar path
-  };
+export default function SidebarNav({
+  fullName,
+  avatar = '/avatar.svg',
+}: SidebarNavProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
 
   return (
     <aside className="w-56 h-screen fixed flex flex-col justify-between bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
@@ -78,10 +82,10 @@ export default function SidebarNav() {
               className="w-full flex items-center gap-3 justify-start p-3"
             >
               <Avatar className="w-8 h-8">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback>{user.name[0]}</AvatarFallback>
+                <AvatarImage src={avatar} alt={fullName} />
+                <AvatarFallback>{fullName?.[0] ?? '?'}</AvatarFallback>
               </Avatar>
-              <span className="text-sm font-bold">{user.name}</span>
+              <span className="text-sm font-bold">{fullName}</span>
               <ChevronUp size={16} className="ml-auto" />
             </Button>
           </DropdownMenuTrigger>
@@ -102,7 +106,8 @@ export default function SidebarNav() {
             <DropdownMenuItem
               className="text-destructive flex items-center gap-2"
               onClick={() => {
-                // Add logout logic here
+                supabase.auth.signOut();
+                router.push('/signin');
               }}
             >
               <LogOut size={16} /> Logout

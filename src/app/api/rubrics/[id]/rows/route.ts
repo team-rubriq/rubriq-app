@@ -1,32 +1,32 @@
-// src/app/api/rubrics/[id]/apply-template-updates/route.ts
+// src/app/api/rubrics/[id]/rows/route.ts
 import { NextResponse } from 'next/server';
 import { withUser } from '../../../_lib/supabase';
 import { mapRubric } from '../../../_lib/mappers';
 
-export async function POST(
+export async function PATCH(
   req: Request,
   { params }: { params: { id: string } },
 ) {
+  const { id } = await params;
   const { supabase, user, error } = await withUser();
   if (error) return error;
 
-  const { acceptRowIds } = await req.json();
-  if (!Array.isArray(acceptRowIds) || acceptRowIds.length === 0) {
-    return NextResponse.json(
-      { error: 'acceptRowIds must be a non-empty array' },
-      { status: 400 },
-    );
-  }
+  const { rows, bumpVersion } = await req.json();
 
-  const { error: rpcErr } = await supabase.rpc('apply_template_updates', {
-    p_rubric_id: params.id,
-    p_accept: acceptRowIds,
-  });
+  // Call RPC to upsert rows atomically + (optionally) bump version
+  const { data: saved, error: rpcErr } = await supabase.rpc(
+    'save_rubric_rows',
+    {
+      p_rubric_id: id,
+      p_rows: rows, // array of row JSONs (id?, position, fields…)
+      p_bump: !!bumpVersion,
+    },
+  );
 
   if (rpcErr)
     return NextResponse.json({ error: rpcErr.message }, { status: 400 });
 
-  // Refetch rubric with rows
+  // Return full rubric with rows (saved returns rubric id/version typically; refetch for complete shape)
   const { data: r, error: rErr } = await supabase
     .from('rubrics')
     .select(
@@ -36,7 +36,10 @@ export async function POST(
     .maybeSingle();
 
   if (rErr || !r)
-    return NextResponse.json({ error: 'Rubric not found' }, { status: 404 });
+    return NextResponse.json(
+      { error: 'Rubric not found after save' },
+      { status: 404 },
+    );
 
   const { data: rr } = await supabase
     .from('rubric_rows')

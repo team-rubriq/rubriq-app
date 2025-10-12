@@ -13,6 +13,7 @@ import {
 import { MoreVertical, Download, Trash } from 'lucide-react';
 import { Rubric } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import * as React from 'react';
 
 interface Props {
   item: Rubric;
@@ -22,26 +23,47 @@ interface Props {
 
 export default function RubricCard({ item, onExport, onDeleteRequest }: Props) {
   const router = useRouter();
+
+  const handleCardClick = React.useCallback(() => {
+    router.push(`/edit-rubric/${item.id}`);
+  }, [router, item.id]);
+
+  const handleExport = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onExport(item.id);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDeleteRequest(item.id);
+  };
+
+  const updatedStr = React.useMemo(
+    () => new Date(item.updatedAt).toLocaleDateString(),
+    [item.updatedAt],
+  );
+
   const statusBadge =
     item.status === 'update-available' ? (
-      <Badge className="animate-pulse">Template update available</Badge>
+      <Badge variant={'default'} className="animate-pulse">Template updates available</Badge>
     ) : null;
 
   return (
     <Card
       className="flex flex-col min-w-[300px] min-h-[200px] hover:bg-muted"
-      onClick={() => router.push(`/edit-rubric/${item.id}`)}
+      onClick={handleCardClick}
       tabIndex={0}
       role="button"
+      aria-label={`Open ${item.name}`}
     >
       <CardHeader className="flex flex-row items-start justify-between space-y-0">
         <div>
           <CardTitle className="text-base">{item.name}</CardTitle>
-          <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
             <span>{item.subjectCode}</span>
-            <span>•</span>
-            <span>{new Date(item.updatedAt).toLocaleDateString()}</span>
-            <span>•</span>
+            <span aria-hidden>•</span>
+            <span title={item.updatedAt}>Updated {updatedStr}</span>
+            <span aria-hidden>•</span>
             <span>{item.rowCount} rows</span>
           </div>
           <div className="mt-2 flex gap-2">{statusBadge}</div>
@@ -53,21 +75,13 @@ export default function RubricCard({ item, onExport, onDeleteRequest }: Props) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onExport(item.id);
-              }}
-            >
+            <DropdownMenuItem onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" /> Export (.xlsx)
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeleteRequest(item.id);
-              }}
+              onClick={handleDelete}
             >
               <Trash className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>

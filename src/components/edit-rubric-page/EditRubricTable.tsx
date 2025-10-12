@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { EllipsisVerticalIcon, Link } from 'lucide-react';
+import { EllipsisVerticalIcon, Trash, Plus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -19,7 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { ArrowUp, ArrowDown, Copy, Trash2, Plus } from 'lucide-react';
 import { RubricRow, TemplateRow } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 
@@ -34,23 +33,26 @@ function findTemplateRow(trs: TemplateRow[], id?: string | null) {
   return trs.find((t) => t.id === id);
 }
 
-export default function RubricRowsTable({
+export default function EditRubricTable({
   rows,
   onChange,
   templateRows,
   dirty,
 }: Props) {
+  const reindex = (arr: RubricRow[]) =>
+    arr.map((r, i) => ({ ...r, position: i }));
+
   const update = (i: number, patch: Partial<RubricRow>) => {
     const next = rows.slice();
     next[i] = { ...next[i], ...patch };
-    onChange(next);
+    onChange(reindex(next));
   };
 
   const addRow = (i?: number) => {
     const idx = typeof i === 'number' ? i + 1 : rows.length;
-    const id = `row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const blank: RubricRow = {
-      id,
+      position: idx,
+      templateRowId: null,
       task: '',
       aiUseLevel: '',
       instructions: '',
@@ -59,21 +61,13 @@ export default function RubricRowsTable({
     };
     const next = rows.slice();
     next.splice(idx, 0, blank);
-    onChange(next);
-  };
-
-  const duplicateRow = (i: number) => {
-    const src = rows[i];
-    const dupe: RubricRow = { ...src, id: `row-${Date.now()}` };
-    const next = rows.slice();
-    next.splice(i + 1, 0, dupe);
-    onChange(next);
+    onChange(reindex(next));
   };
 
   const deleteRow = (i: number) => {
     const next = rows.slice();
     next.splice(i, 1);
-    onChange(next);
+    onChange(reindex(next));
   };
 
   const columns = [
@@ -99,6 +93,7 @@ export default function RubricRowsTable({
           </div>
           <div>{dirty && <div>Unsaved changes...</div>}</div>
         </div>
+
         <Table className="w-full table-fixed border">
           <TableHeader>
             <TableRow className="divide-x divide-border bg-chart-3/5 hover:bg-chart-3/5">
@@ -111,20 +106,23 @@ export default function RubricRowsTable({
               <TableHead className="w-[40px]"></TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {rows.map((r, i) => {
               const trow = findTemplateRow(templateRows, r.templateRowId);
               const linked = !!trow;
+
               return (
                 <TableRow
-                  key={r.id}
+                  key={r.id ?? `new-${i}`}
                   className="divide-x divide-border h-[300px]"
                 >
                   <TableCell className="py-3 text-center align-top relative text-xs text-muted-foreground">
                     <div className="pb-3">{i + 1}</div>
                     {linked && <div>(linked)</div>}
                   </TableCell>
-                  {/* editable cells */}
+
+                  {/* Editable cells */}
                   <TableCell className="text-left align-top p-0 relative">
                     <Textarea
                       value={r.task}
@@ -182,17 +180,23 @@ export default function RubricRowsTable({
                       )}
                   </TableCell>
 
+                  {/* Row actions */}
                   <TableCell className="align-top flex justify-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label="Row actions"
+                        >
                           <EllipsisVerticalIcon />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => duplicateRow(i)}>
-                          <Copy className="h-4 w-4 mr-2" /> Duplicate
-                        </DropdownMenuItem>
+                      <DropdownMenuContent
+                        align="end"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <DropdownMenuItem onClick={() => addRow(i)}>
                           <Plus className="h-4 w-4 mr-2" /> Add below
                         </DropdownMenuItem>
@@ -201,7 +205,7 @@ export default function RubricRowsTable({
                           className="text-destructive"
                           onClick={() => deleteRow(i)}
                         >
-                          <Trash2 className="h-4 w-4 mr-2" /> Delete
+                          <Trash className="h-4 w-4 mr-2" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -212,6 +216,7 @@ export default function RubricRowsTable({
           </TableBody>
         </Table>
       </div>
+
       <div className="mt-6 mb-20">
         <Button
           variant="outline"
@@ -229,7 +234,7 @@ export default function RubricRowsTable({
 function CellChanged() {
   return (
     <Badge
-      variant="secondary"
+      variant="default"
       className="absolute left-2 bottom-2 border-border pointer-events-none"
     >
       {' '}
