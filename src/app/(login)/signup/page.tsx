@@ -15,7 +15,8 @@ export default function SignUpPage() {
   const supabase = createClient();
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -38,14 +39,17 @@ export default function SignUpPage() {
     setError('');
     setSuccess(false);
 
-    // Validation - Check if passwords match
+    // Validation
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('Please enter your first and last name');
+      setSelectedRole(null);
+      return;
+    }
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       setSelectedRole(null);
       return;
     }
-
-    // Password strength validation
     if (password.length < 6) {
       setError('Password should be at least 6 characters long');
       setSelectedRole(null);
@@ -63,7 +67,10 @@ export default function SignUpPage() {
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
-            role: role, // This passes the role to our database trigger
+            role: role,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            avatar: '/avatars/avatar1.svg',
           },
         },
       });
@@ -86,7 +93,8 @@ export default function SignUpPage() {
 
           // Clear form
           setEmail('');
-          setName('');
+          setFirstName('');
+          setLastName('');
           setPassword('');
           setConfirmPassword('');
         } else {
@@ -140,16 +148,41 @@ export default function SignUpPage() {
           {success && (
             <Alert>
               <AlertDescription>
-                Registration successful! Please check your email to confirm
-                your account.
+                Registration successful! Please check your email to confirm your
+                account.
               </AlertDescription>
             </Alert>
           )}
 
-          <div className="space-y-4">
-            {/* Email Field */}
+          <form className="space-y-4" onSubmit={handleFormSubmit}>
+            {/* First Name */}
             <div className="space-y-2">
-              {/* htmlFor="email" links this label to id=email */}
+              <Label htmlFor="firstName">First name</Label>
+              <Input
+                id="firstName"
+                placeholder="Please enter your first name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            {/* Last Name */}
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last name</Label>
+              <Input
+                id="lastName"
+                placeholder="Please enter your last name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -162,7 +195,7 @@ export default function SignUpPage() {
               />
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -178,7 +211,7 @@ export default function SignUpPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -186,7 +219,7 @@ export default function SignUpPage() {
               </div>
             </div>
 
-            {/* Confirm Password Field */}
+            {/* Confirm Password */}
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Re-enter Password</Label>
               <div className="relative">
@@ -202,7 +235,7 @@ export default function SignUpPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   tabIndex={-1}
                 >
                   {showConfirmPassword ? (
@@ -214,10 +247,10 @@ export default function SignUpPage() {
               </div>
             </div>
 
-            {/* Role Selection Buttons */}
+            {/* Role Buttons */}
             <div className="flex gap-4">
               <Button
-                type="button" // Important: Not submit!
+                type="button"
                 variant="outline"
                 className="flex-1"
                 onClick={() => handleSignUp('admin')}
@@ -227,9 +260,8 @@ export default function SignUpPage() {
                   ? 'Creating admin account...'
                   : 'Register as Admin'}
               </Button>
-
               <Button
-                type="button" // Important: Not submit!
+                type="button"
                 className="flex-1"
                 onClick={() => handleSignUp('user')}
                 disabled={loading}
@@ -239,7 +271,7 @@ export default function SignUpPage() {
                   : 'Register as User'}
               </Button>
             </div>
-          </div>
+          </form>
 
           {/* Sign in link */}
           <div className="text-center text-sm">
