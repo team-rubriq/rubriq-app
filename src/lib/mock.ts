@@ -37,6 +37,7 @@ export const sampleRubrics: Rubric[] = [
           'Use AI only to survey high-level ideas (divide-and-conquer, greedy, DP). Do NOT request a bespoke algorithm for your exact prompt.',
         examples: GENERAL_LEARNING_EXAMPLES,
         acknowledgement: UNI_MELB_ACK,
+        position: 1,
       },
       {
         id: 'rb1-row-2',
@@ -48,6 +49,7 @@ export const sampleRubrics: Rubric[] = [
         examples: `YES — Manually enumerate constraints from the PDF brief.
 NO — Paste the brief into AI to summarise constraints for you.`,
         acknowledgement: UNI_MELB_ACK,
+        position: 2,
       },
       {
         id: 'rb1-row-3',
@@ -59,6 +61,7 @@ NO — Paste the brief into AI to summarise constraints for you.`,
         examples: `YES — Ask “show example of binary heap API in language X”, then integrate.
 NO — “Implement Dijkstra for my graph input format and return final code.”`,
         acknowledgement: UNI_MELB_ACK,
+        position: 3,
       },
       {
         id: 'rb1-row-4',
@@ -70,6 +73,7 @@ NO — “Implement Dijkstra for my graph input format and return final code.”
         examples: `YES — “Polish tone and fix grammar for this paragraph.”
 NO — “Write the correctness proof of my approach.”`,
         acknowledgement: UNI_MELB_ACK,
+        position: 4,
       },
     ],
   },
@@ -94,6 +98,7 @@ NO — “Write the correctness proof of my approach.”`,
           'Use AI to learn UML basics and common patterns. Do not ask it to design your exact system.',
         examples: GENERAL_LEARNING_EXAMPLES,
         acknowledgement: UNI_MELB_ACK,
+        position: 1,
       },
       {
         id: 'rb2-row-2',
@@ -104,6 +109,7 @@ NO — “Write the correctness proof of my approach.”`,
         examples: `YES — Brainstorm with teammates and iterate diagrams.
 NO — Provide your full brief to AI to generate the domain model.`,
         acknowledgement: UNI_MELB_ACK,
+        position: 2,
       },
       {
         id: 'rb2-row-3',
@@ -114,6 +120,7 @@ NO — Provide your full brief to AI to generate the domain model.`,
         examples: `YES — Ask for grammar/style suggestions on a paragraph.
 NO — Ask AI to justify your architecture for you.`,
         acknowledgement: UNI_MELB_ACK,
+        position: 3,
       },
     ],
   },
@@ -139,6 +146,7 @@ NO — Ask AI to justify your architecture for you.`,
           'Use AI to clarify general networking concepts; do not feed your project code.',
         examples: GENERAL_LEARNING_EXAMPLES,
         acknowledgement: UNI_MELB_ACK,
+        position: 1,
       },
       {
         id: 'rb3-row-2',
@@ -150,6 +158,7 @@ NO — Ask AI to justify your architecture for you.`,
         examples: `YES — Your own sequence/architecture diagrams.
 NO — Auto-generated plan tailored to your exact spec.`,
         acknowledgement: UNI_MELB_ACK,
+        position: 2,
       },
       {
         id: 'rb3-row-3',
@@ -161,6 +170,7 @@ NO — Auto-generated plan tailored to your exact spec.`,
         examples: `YES — Ask for an example of non-blocking I/O loop; adapt to project.
 NO — Request full proxy solution matching your rubric.`,
         acknowledgement: UNI_MELB_ACK,
+        position: 3,
       },
     ],
   },
@@ -186,6 +196,7 @@ NO — Request full proxy solution matching your rubric.`,
           'Use AI for broad understanding only; avoid dataset/code specifics.',
         examples: GENERAL_LEARNING_EXAMPLES,
         acknowledgement: UNI_MELB_ACK,
+        position: 1,
       },
       {
         id: 'rb4-row-2',
@@ -196,6 +207,7 @@ NO — Request full proxy solution matching your rubric.`,
         examples: `YES — Ask how to structure a select()-based loop.
 NO — Ask AI to implement your assignment end-to-end.`,
         acknowledgement: UNI_MELB_ACK,
+        position: 2,
       },
     ],
   },
@@ -220,6 +232,7 @@ NO — Ask AI to implement your assignment end-to-end.`,
           'Use AI to learn about GDPR principles and threat-modelling concepts. Do not request tailored analysis of your case study.',
         examples: GENERAL_LEARNING_EXAMPLES,
         acknowledgement: UNI_MELB_ACK,
+        position: 1,
       },
       {
         id: 'rb5-row-2',
@@ -230,6 +243,7 @@ NO — Ask AI to implement your assignment end-to-end.`,
         examples: `YES — “Improve clarity of this paragraph (no new ideas).”
 NO — “Draft the ethical analysis section for me.”`,
         acknowledgement: UNI_MELB_ACK,
+        position: 2,
       },
     ],
   },
@@ -254,6 +268,7 @@ export const sampleTemplates: RubricTemplate[] = [
           'Use AI only to understand broad context (e.g., algorithm paradigms, high-level trade-offs). Do NOT ask for a solution to your exact problem or dataset.',
         examples: GENERAL_LEARNING_EXAMPLES,
         acknowledgement: UNI_MELB_ACK,
+        position:1
       },
       {
         id: 'tpl100-row-2',
@@ -264,6 +279,7 @@ export const sampleTemplates: RubricTemplate[] = [
         examples: `YES — You write the constraints based on the brief and lecture notes.
 NO — You paste the full brief into an AI and ask it to extract constraints.`,
         acknowledgement: UNI_MELB_ACK,
+        position:2
       },
       {
         id: 'tpl100-row-3',
@@ -274,6 +290,7 @@ NO — You paste the full brief into an AI and ask it to extract constraints.`,
         examples: `YES — Ask for a generic priority queue pattern, then implement your own Dijkstra variant.
 NO — Paste your full task and request a complete implementation.`,
         acknowledgement: UNI_MELB_ACK,
+        position:3
       },
       {
         id: 'tpl100-row-4',
@@ -284,6 +301,7 @@ NO — Paste your full task and request a complete implementation.`,
         examples: `YES — “Rewrite this paragraph for clarity (no new content).”
 NO — “Write the complexity analysis for my solution given this code.”`,
         acknowledgement: UNI_MELB_ACK,
+        position:4
       },
     ],
   },
@@ -305,6 +323,7 @@ NO — “Write the complexity analysis for my solution given this code.”`,
           'Use AI to learn concepts like TCP vs UDP, HTTP message format, and common pitfalls. Do not request tailored solutions to your codebase.',
         examples: GENERAL_LEARNING_EXAMPLES,
         acknowledgement: UNI_MELB_ACK,
+        position:1
       },
       {
         id: 'tpl200-row-2',
@@ -315,6 +334,7 @@ NO — “Write the complexity analysis for my solution given this code.”`,
         examples: `YES — Hand-drawn or authored by you system diagrams.
 NO — “Generate a design doc for my exact spec and constraints.”`,
         acknowledgement: UNI_MELB_ACK,
+        position:2
       },
       {
         id: 'tpl200-row-3',
@@ -325,6 +345,7 @@ NO — “Generate a design doc for my exact spec and constraints.”`,
         examples: `YES — Ask how to parse HTTP headers in C safely; adapt to your project.
 NO — Ask for a complete proxy implementation tailored to your brief.`,
         acknowledgement: UNI_MELB_ACK,
+        position:3
       },
     ],
   },
@@ -335,6 +356,8 @@ export async function getRubricById(id: string): Promise<Rubric | null> {
   return sampleRubrics.find((r) => r.id === id) ?? null;
 }
 
-export async function getTemplateById(id: string): Promise<RubricTemplate | null> {
+export async function getTemplateById(
+  id: string,
+): Promise<RubricTemplate | null> {
   return sampleTemplates.find((t) => t.id === id) ?? null;
 }

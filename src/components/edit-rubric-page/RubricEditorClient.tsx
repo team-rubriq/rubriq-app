@@ -7,11 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Rubric, RubricTemplate, RubricRow } from '@/lib/types';
-import EditRubricTable from './EditRubricTable';
-import TemplateUpdatesSheet from './TemplateUpdatesSheet';
 import { Separator } from '@/components/ui/separator';
 import * as XLSX from 'xlsx-js-style';
 import { Save, Undo, Download } from 'lucide-react';
+import EditRubricTable from './EditRubricTable';
+import TemplateUpdatesSheet from './TemplateUpdatesSheet';
+import { RubricAPI } from '@/lib/api';
 
 interface Props {
   initialRubric: Rubric;
@@ -26,6 +27,7 @@ export default function RubricEditorClient({
 
   const [rubric, setRubric] = React.useState<Rubric>(initialRubric);
   const [dirty, setDirty] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
   const [updatesOpen, setUpdatesOpen] = React.useState(false);
 
   // unsaved-changes guard on hard navigation/refresh
@@ -36,13 +38,10 @@ export default function RubricEditorClient({
       e.returnValue = '';
     };
     window.addEventListener('beforeunload', onBeforeUnload);
-    return () =>
-      window.removeEventListener('beforeunload', onBeforeunload as any);
-    // NB: TS happy cast below:
-    function onBeforeunload(e: BeforeUnloadEvent) {}
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [dirty]);
 
-  // keyboard shortcuts: Cmd/Ctrl+S to save, Cmd/Ctrl+Enter add row
+  // keyboard shortcuts: Cmd/Ctrl+S to save
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const cmd = e.metaKey || e.ctrlKey;
@@ -55,34 +54,56 @@ export default function RubricEditorClient({
     return () => window.removeEventListener('keydown', onKey);
   }, [rubric]);
 
-  // header field handlers
+  // Header field handlers
   const setName = (name: string) => {
     setDirty(true);
     setRubric((r) => ({ ...r, name }));
   };
-  const setSubject = (subjectCode: string) => {
-    setDirty(true);
-    setRubric((r) => ({ ...r, subjectCode }));
-  };
 
-  // rows handlers
+  // Rows handlers
   const onRowsChange = (rows: RubricRow[]) => {
+    const normalized = rows.map((row, i) => ({ ...row, position: i }));
     setDirty(true);
-    setRubric((r) => ({ ...r, rows, rowCount: rows.length }));
+    setRubric((r) => ({ ...r, rows: normalized, rowCount: normalized.length }));
   };
 
-  // save/cancel (frontend only)
-  const handleSave = () => {
-    const now = new Date().toISOString();
-    setRubric((r) => ({ ...r, updatedAt: now, version: r.version + 1 }));
-    setDirty(false);
-    toast('Saved', { description: 'Rubric changes have been saved (demo).' });
+  // Save: PATCH, then RPC, then refetch
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+
+      // save metadata
+      await RubricAPI.rename(rubric.id, rubric.name);
+
+      // save rows via RPC
+      const rows = (rubric.rows ?? []).map((r, i) => ({ ...r, position: i }));
+      const updated = await RubricAPI.saveRows(rubric.id, rows, true);
+
+      // refetch rubric
+      const fresh = await RubricAPI.get(rubric.id);
+      setRubric(fresh);
+      setDirty(false);
+      toast.success('Saved', {
+        description: `Rubric v${updated.version} saved.`,
+      });
+    } catch (e: any) {
+      toast.error('Save failed', { description: e.message });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleCancel = () => {
-    setRubric(initialRubric);
-    setDirty(false);
-    toast('Discarded', { description: 'Reverted to last loaded state.' });
+  const handleRevert = async () => {
+    try {
+      const fresh = await RubricAPI.get(rubric.id);
+      setRubric(fresh);
+      setDirty(false);
+      toast.message('Reverted', {
+        description: 'Returned to last saved state.',
+      });
+    } catch (e: any) {
+      toast.error('Revert failed', { description: e.message });
+    }
   };
 
   // Export rubric handler (export to XLSX)
@@ -114,7 +135,7 @@ export default function RubricEditorClient({
       ...studentHeaders,
     ];
 
-    const dataRows = rubric.rows.map((row) => [
+    const dataRows = (rubric.rows ?? []).map((row) => [
       row.task,
       row.aiUseLevel,
       row.instructions,
@@ -216,6 +237,22 @@ export default function RubricEditorClient({
     );
   };
 
+  // Handle template updates via RPC, then refetch
+  const handleApplyTemplateUpdates = async (selectedRowIds: string[]) => {
+    if (!selectedRowIds.length) return;
+    try {
+      await RubricAPI.applyTemplateUpdates(rubric.id, selectedRowIds);
+      const fresh = await RubricAPI.get(rubric.id);
+      setRubric(fresh);
+      setDirty(false);
+      setUpdatesOpen(false);
+      toast.success('Template updates applied');
+    } catch (e: any) {
+      toast.error('Apply updates failed', { description: e.message });
+    }
+  };
+
+  // Compute availability of template updates from props
   const hasTemplateUpdates =
     rubric.status === 'update-available' &&
     linkedTemplate &&
@@ -231,19 +268,23 @@ export default function RubricEditorClient({
             value={rubric.name}
             onChange={(e) => setName(e.target.value)}
           />
-          <Input
-            className="w-40"
-            value={rubric.subjectCode}
-            onChange={(e) => setSubject(e.target.value.toUpperCase())}
-          />
+          <Input className="w-40" value={rubric.subjectCode} readOnly />
           <div className="ml-auto flex items-center gap-2">
             <span title="Revert Changes">
-              <Button variant={'ghost'} onClick={handleCancel}>
+              <Button
+                variant={'ghost'}
+                onClick={handleRevert}
+                disabled={saving}
+              >
                 <Undo className="" />
               </Button>
             </span>
             <span title="Save">
-              <Button variant={'ghost'} onClick={handleSave}>
+              <Button
+                variant={'ghost'}
+                onClick={handleSave}
+                disabled={saving || !dirty}
+              >
                 <Save className="" />
               </Button>
             </span>
@@ -257,7 +298,7 @@ export default function RubricEditorClient({
       </div>
 
       {/* Meta */}
-      <div className="flex mx-auto text-sm max-w-screen-xl px-5 text-muted-foreground">
+      <div className="flex mx-auto text-sm max-w-screen-xl px-5 text-muted-foreground gap-5">
         <div className="flex items-center gap-5">
           <div className="flex flex-row gap-2">
             <Badge variant="outline">Rubric ID</Badge>
@@ -292,7 +333,7 @@ export default function RubricEditorClient({
           <Badge
             variant="default"
             onClick={() => setUpdatesOpen(true)}
-            className="ml-auto animate-pulse"
+            className="ml-auto animate-pulse hover:cursor-pointer"
           >
             Template updates available. Click to update.
           </Badge>
@@ -302,7 +343,7 @@ export default function RubricEditorClient({
       {/* Rows table */}
       <div className="mx-auto max-w-screen-xl px-4">
         <EditRubricTable
-          rows={rubric.rows}
+          rows={rubric.rows ?? []}
           onChange={onRowsChange}
           templateRows={linkedTemplate?.rows ?? []}
           dirty={dirty}
@@ -316,19 +357,8 @@ export default function RubricEditorClient({
           onOpenChange={setUpdatesOpen}
           rubric={rubric}
           template={linkedTemplate}
-          onApply={(nextRows, newTemplateVersion) => {
-            setDirty(true);
-            setRubric((r) => ({
-              ...r,
-              rows: nextRows,
-              rowCount: nextRows.length,
-              templateVersion: newTemplateVersion,
-              status: 'active',
-            }));
-            setUpdatesOpen(false);
-            toast('Updates applied', {
-              description: 'Template changes merged.',
-            });
+          onApply={async (selectedIds) => {
+            await handleApplyTemplateUpdates(selectedIds);
           }}
         />
       )}

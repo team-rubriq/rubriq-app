@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/app/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
 import { motion } from 'framer-motion';
@@ -12,6 +12,7 @@ import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function SignUpPage() {
+  const supabase = createClient();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');

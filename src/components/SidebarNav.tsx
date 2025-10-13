@@ -18,7 +18,7 @@ import { useRole } from '@/hooks/useRole';
 
 const links = [
   { href: '/my-rubrics', label: 'My Rubrics', icon: TableProperties },
-  { href: '/rubric-repo', label: 'Rubric Repository', icon: PackageOpen },
+  { href: '/templates', label: 'Templates', icon: PackageOpen },
 ];
 
 export default function SidebarNav() {

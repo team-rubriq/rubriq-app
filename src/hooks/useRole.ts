@@ -1,6 +1,6 @@
 // hooks/useRole.ts
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/app/utils/supabase/client';
 
 export type UserRole = 'admin' | 'user';
 
@@ -15,6 +15,8 @@ interface UseRoleReturn {
   avatar: string | null;
   refetch: () => Promise<void>;
 }
+
+const supabase = createClient();
 
 export function useRole(): UseRoleReturn {
   const [id, setId] = useState<string | null>(null);

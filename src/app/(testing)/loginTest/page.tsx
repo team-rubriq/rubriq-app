@@ -1,14 +1,16 @@
 // app/test-role/page.tsx
-'use client';
+'use client'
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/app/utils/supabase/client';
 import { useRole } from '@/hooks/useRole'; // Import the hook
 
 export default function TestRolePage() {
   const [status, setStatus] = useState<string>('Loading...');
   const [userInfo, setUserInfo] = useState<any>(null);
   const [profileInfo, setProfileInfo] = useState<any>(null);
+
+  const supabase = createClient();
 
   // Use the useRole hook
   const {

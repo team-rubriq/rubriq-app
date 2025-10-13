@@ -2,7 +2,7 @@
 'use client';
 
 import { FormEvent, useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/app/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
 import { motion } from 'framer-motion';
@@ -37,6 +37,7 @@ export default function LoginPage() {
 
   // Sign-in handler
   const handleSignIn = async (e: FormEvent) => {
+    const supabase = createClient();
     e.preventDefault();
 
     setError('');
@@ -53,9 +54,10 @@ export default function LoginPage() {
       if (signInError) {
         setError(signInError.message);
         return;
-        } else{
+      }
+      if (data.user) {
           router.push('my-rubrics');
-        }
+      }
     } catch (err) {
       console.error('Sign in error:', err);
       setError('An unexpected error occurred. Please try again.');
