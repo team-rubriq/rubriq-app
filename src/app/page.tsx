@@ -1,4 +1,3 @@
-// Redirect to either /home or /login
 import { redirect } from 'next/navigation';
 import { createClient } from '@/app/utils/supabase/server';
 import LoginPage from './(login)/signin/page';
