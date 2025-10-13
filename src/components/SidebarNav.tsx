@@ -12,35 +12,21 @@ import {
   Settings,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/app/utils/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useRole } from '@/hooks/useRole';
 
 const links = [
   { href: '/my-rubrics', label: 'My Rubrics', icon: TableProperties },
   { href: '/templates', label: 'Templates', icon: PackageOpen },
 ];
 
-interface SidebarNavProps {
-  fullName: string;
-  avatar?: string;
-}
-
-export default function SidebarNav({
-  fullName,
-  avatar = '/avatar.svg',
-}: SidebarNavProps) {
+export default function SidebarNav() {
   const pathname = usePathname();
-  const router = useRouter();
-  const supabase = createClient();
+
+  const { id, email, role, loading: roleLoading, isAdmin, isUser, error: roleError, avatar } = useRole();
+  if (roleLoading) return <div>Loading...</div>;
+  if (roleError) return <div>Error: {roleError}</div>;
 
   return (
     <aside className="w-56 h-screen fixed flex flex-col justify-between bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
@@ -75,45 +61,20 @@ export default function SidebarNav({
 
       {/* Footer */}
       <div className="px-2 pb-5">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="w-full flex items-center gap-3 justify-start p-3"
-            >
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={avatar} alt={fullName} />
-                <AvatarFallback>{fullName?.[0] ?? '?'}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-bold">{fullName}</span>
-              <ChevronUp size={16} className="ml-auto" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="end" className="w-full">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/profile" className="flex items-center gap-2">
-                <User size={16} /> Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/profile" className="flex items-center gap-2">
-                <Settings size={16} /> Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive flex items-center gap-2"
-              onClick={() => {
-                supabase.auth.signOut();
-                router.push('/signin');
-              }}
-            >
-              <LogOut size={16} /> Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          asChild
+          variant="ghost"
+          className="w-full flex items-center gap-3 justify-start p-3"
+        >
+          <Link href="/profile">
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={avatar || ''} alt={email || 'User'} />
+              <AvatarFallback>{email}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-bold">{"Profile"}</span>
+            <Settings size={16} />
+          </Link>
+        </Button>
       </div>
     </aside>
   );
