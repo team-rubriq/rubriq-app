@@ -18,10 +18,14 @@ export default async function ProfileLayout({
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('first_name, last_name')
+      .select('first_name, last_name, avatar')
       .eq('id', user.id)
       .maybeSingle();
-    profileName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim();
+    profileName = [profile?.first_name, profile?.last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    avatar = profile?.avatar;
   }
 
   return (
