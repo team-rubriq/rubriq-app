@@ -104,6 +104,7 @@ export default function ProfilePage() {
         setSelectedAvatar(profile?.avatar ?? defaultAvatars[0]);
       } catch (e: any) {
         toast.error('Failed to load profile', { description: e.message });
+        router.push('/signin');
       } finally {
         if (alive) setLoadingProfile(false);
       }
