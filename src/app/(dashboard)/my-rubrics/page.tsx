@@ -60,8 +60,6 @@ export default async function Page() {
     // rows are not loaded on the home page (keep list light)
   }));
 
-  console.log('Name is:', profile?.first_name ?? '');
-
   return (
     <RubricsHomeClient
       initialData={initialData}

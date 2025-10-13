@@ -28,7 +28,7 @@ export default function ConfirmDeleteDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete rubric?</AlertDialogTitle>
+          <AlertDialogTitle>Confirm Delete?</AlertDialogTitle>
           <AlertDialogDescription>
             “{itemName ?? 'Untitled'}” will be permanently removed. This cannot
             be undone.

@@ -1,86 +1,81 @@
+// src/app/api/templates/[id]/rows/route.ts
 import { NextResponse } from 'next/server';
-import { withUser } from '../../../_lib/supabase';
+import { createClient } from '@/app/utils/supabase/server';
+import { requireAdmin } from '../../../_lib/admin-guard';
 import { mapTemplate } from '../../../_lib/mappers';
 
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } },
 ) {
+  const guard = await requireAdmin();
+  if (guard) return guard;
+
   const { id } = await params;
-  const { supabase, user, error } = await withUser();
-  if (error) return error;
+  const supabase = await createClient();
+  const { rows = [], bumpVersion = true } = await req.json();
 
-  // TODO: admin check
-
-  const { rows, bumpVersion } = await req.json();
-
-  // naive sync: delete all rows and reinsert (or write a dedicated RPC if you prefer diff/merge)
-  const { error: delErr } = await supabase
+  // strategy: replace all rows (simplest, keep ids if provided)
+  // 1) delete existing rows
+  const { error: dErr } = await supabase
     .from('template_rows')
     .delete()
     .eq('template_id', id);
-  if (delErr)
-    return NextResponse.json({ error: delErr.message }, { status: 400 });
+  if (dErr) return NextResponse.json({ error: dErr.message }, { status: 400 });
 
-  if (Array.isArray(rows) && rows.length) {
-    const payload = rows.map((r: any, i: number) => ({
-      template_id: id,
-      position: r.position ?? i,
-      task: r.task ?? '',
-      ai_use_level: r.aiUseLevel ?? '',
-      instructions: r.instructions ?? '',
-      examples: r.examples ?? '',
-      acknowledgement: r.acknowledgement ?? '',
-    }));
-    const { error: insErr } = await supabase
-      .from('template_rows')
-      .insert(payload);
-    if (insErr)
-      return NextResponse.json({ error: insErr.message }, { status: 400 });
-  }
+  // 2) insert new set (sorted by position)
+  const toInsert = (rows as any[]).map((r, i) => ({
+    template_id: id,
+    position: r.position ?? i,
+    task: r.task ?? '',
+    ai_use_level: r.aiUseLevel ?? '',
+    instructions: r.instructions ?? '',
+    examples: r.examples ?? '',
+    acknowledgement: r.acknowledgement ?? '',
+  }));
+  const { error: iErr } = await supabase.from('template_rows').insert(toInsert);
+  if (iErr) return NextResponse.json({ error: iErr.message }, { status: 400 });
 
+  // 3) optionally bump template version (minor)
   if (bumpVersion) {
-    const { error: bumpErr } = await supabase
+    const { error: uErr } = await supabase
       .from('templates')
       .update({
-        version: supabase.rpc('increment_int', {
-          /* optional */
-        }),
-      }) // or do read+update
+        version: undefined,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', id);
-
-    // Simpler inline bump:
-    const { data: curTpl } = await supabase
+    // ^ If you want a strict publish gate, you can skip bump here and only bump in /publish.
+    // Typically: keep version for "draft changes" and only bump in publish route.
+    if (uErr)
+      return NextResponse.json({ error: uErr.message }, { status: 400 });
+  } else {
+    const { error: tsErr } = await supabase
       .from('templates')
-      .select('version')
-      .eq('id', id)
-      .maybeSingle();
-    const { error: bumpSimpleErr } = await supabase
-      .from('templates')
-      .update({ version: (curTpl?.version ?? 1) + 1 })
+      .update({ updated_at: new Date().toISOString() })
       .eq('id', id);
-    if (bumpSimpleErr)
-      return NextResponse.json(
-        { error: bumpSimpleErr.message },
-        { status: 400 },
-      );
+    if (tsErr)
+      return NextResponse.json({ error: tsErr.message }, { status: 400 });
   }
 
-  const { data: tpl } = await supabase
-    .from('templates')
-    .select(
-      `id, name, subject_code, version, row_count, description, updated_at, created_by`,
-    )
-    .eq('id', id)
-    .maybeSingle();
+  // 4) read back
+  const [{ data: t }, { data: rowsDb }] = await Promise.all([
+    supabase
+      .from('templates')
+      .select(
+        'id, name, subject_code, version, description, updated_at, created_by',
+      )
+      .eq('id', id)
+      .maybeSingle(),
+    supabase
+      .from('template_rows')
+      .select(
+        'id, position, task, ai_use_level, instructions, examples, acknowledgement',
+      )
+      .eq('template_id', id)
+      .order('position', { ascending: true }),
+  ]);
 
-  const { data: trows } = await supabase
-    .from('template_rows')
-    .select(
-      `id, position, task, ai_use_level, instructions, examples, acknowledgement`,
-    )
-    .eq('template_id', id)
-    .order('position', { ascending: true });
-
-  return NextResponse.json(mapTemplate(tpl, trows ?? []));
+  if (!t) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json(mapTemplate(t, rowsDb ?? []));
 }

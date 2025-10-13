@@ -1,35 +1,45 @@
-// src/app/api/templates/route.ts
 import { NextResponse } from 'next/server';
-import { withUser } from '../_lib/supabase';
-import { mapTemplate } from '../_lib/mappers';
+import { createClient } from '@/app/utils/supabase/server';
+import { requireAdmin } from '../_lib/admin-guard';
+import { mapTemplate, mapTemplateRow } from '../_lib/mappers';
 
 export async function POST(req: Request) {
-  const { supabase, user, error } = await withUser();
-  if (error) return error;
+  const guard = await requireAdmin();
+  if (guard) return guard;
 
-  // TODO: admin check here (e.g., profiles.role = 'admin')
+  const supabase = await createClient();
+  const payload = await req.json();
+  const { name, subjectCode, description = '', rows = [] } = payload ?? {};
 
-  const body = await req.json();
-  const { name, subjectCode, description, rows } = body;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: tpl, error: insErr } = await supabase
+  // 1) create template shell
+  const { data: created, error: cErr } = await supabase
     .from('templates')
     .insert({
       name,
       subject_code: subjectCode,
-      description: description ?? '',
+      description,
       version: 1,
       created_by: user.id,
+      updated_at: new Date().toISOString(),
     })
     .select('*')
     .single();
+  if (cErr || !created)
+    return NextResponse.json(
+      { error: cErr?.message || 'Create failed' },
+      { status: 400 },
+    );
 
-  if (insErr)
-    return NextResponse.json({ error: insErr.message }, { status: 400 });
-
-  if (Array.isArray(rows) && rows.length) {
-    const payload = rows.map((r: any, i: number) => ({
-      template_id: tpl.id,
+  // 2) optional initial rows
+  if (rows?.length) {
+    const rowsToInsert = rows.map((r: any, i: number) => ({
+      template_id: created.id,
       position: r.position ?? i,
       task: r.task ?? '',
       ai_use_level: r.aiUseLevel ?? '',
@@ -37,20 +47,21 @@ export async function POST(req: Request) {
       examples: r.examples ?? '',
       acknowledgement: r.acknowledgement ?? '',
     }));
-    const { error: rowErr } = await supabase
+    const { error: rErr } = await supabase
       .from('template_rows')
-      .insert(payload);
-    if (rowErr)
-      return NextResponse.json({ error: rowErr.message }, { status: 400 });
+      .insert(rowsToInsert);
+    if (rErr)
+      return NextResponse.json({ error: rErr.message }, { status: 400 });
   }
 
-  const { data: trows } = await supabase
+  // 3) read back with rows
+  const { data: rowsDb } = await supabase
     .from('template_rows')
     .select(
-      `id, position, task, ai_use_level, instructions, examples, acknowledgement`,
+      'id, position, task, ai_use_level, instructions, examples, acknowledgement',
     )
-    .eq('template_id', tpl.id)
+    .eq('template_id', created.id)
     .order('position', { ascending: true });
 
-  return NextResponse.json(mapTemplate(tpl, trows ?? []));
+  return NextResponse.json(mapTemplate(created, rowsDb ?? []));
 }

@@ -7,6 +7,7 @@ export async function POST(
   req: Request,
   { params }: { params: { id: string } },
 ) {
+  const { id } = await params;
   const { supabase, user, error } = await withUser();
   if (error) return error;
 
@@ -19,7 +20,7 @@ export async function POST(
   }
 
   const { error: rpcErr } = await supabase.rpc('apply_template_updates', {
-    p_rubric_id: params.id,
+    p_rubric_id: id,
     p_accept: acceptRowIds,
   });
 
@@ -32,7 +33,7 @@ export async function POST(
     .select(
       `id, name, subject_code, version, row_count, status, template_id, template_version, updated_at, shared, owner_id`,
     )
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle();
 
   if (rErr || !r)
