@@ -32,7 +32,7 @@ export async function PATCH(
     .select(
       `id, name, subject_code, version, row_count, status, template_id, template_version, updated_at, shared, owner_id`,
     )
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle();
 
   if (rErr || !r)

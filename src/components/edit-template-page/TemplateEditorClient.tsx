@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Save, Undo, Upload } from 'lucide-react';
 import EditTemplateTable from './EditTemplateTable';
 import { TemplateAPI } from '@/lib/api';
+import { dir } from 'console';
 
 export default function TemplateEditorClient({
   initialTemplate,
@@ -21,7 +22,9 @@ export default function TemplateEditorClient({
 }) {
   const [tpl, setTpl] = React.useState<RubricTemplate>(initialTemplate);
   const [dirty, setDirty] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
 
+  // unsaved-changes guard on hard navigation/refresh
   React.useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!dirty) return;
@@ -32,34 +35,61 @@ export default function TemplateEditorClient({
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [dirty]);
 
+  // keyboard shortcuts: Cmd/Ctrl+S to save
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const cmd = e.metaKey || e.ctrlKey;
+      if (cmd && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [tpl]);
+
+  // Template name handler
   const setName = (name: string) => {
     setTpl((t) => ({ ...t, name }));
     setDirty(true);
   };
+
+  // Subject name handler
   const setSubject = (subjectCode: string) => {
     setTpl((t) => ({ ...t, subjectCode }));
     setDirty(true);
   };
-  const setDescription = (description: string) => {
-    setTpl((t) => ({ ...t, description }));
-    setDirty(true);
-  };
 
+  // Rows handlers
   const onRowsChange = (rows: TemplateRow[]) => {
     setTpl((t) => ({ ...t, rows, rowCount: rows.length }));
     setDirty(true);
   };
 
+  // Save: PATCH, then RPC, then refetch
   const handleSave = async () => {
     if (!isAdmin) return;
     try {
-      const next = await TemplateAPI.updateRows(tpl.id, tpl.rows ?? [], true);
-      // (Optional) add an endpoint to PATCH name/subject/description if you want to edit those too
-      setTpl(next);
+      setSaving(true);
+
+      // Save metadata
+      await TemplateAPI.rename(tpl.id, tpl.name, tpl.subjectCode);
+
+      // save rows via RPC
+      const rows = (tpl.rows ?? []).map((r, i) => ({ ...r, position: i }));
+      const updated = await TemplateAPI.updateRows(tpl.id, rows, false);
+
+      // refetch template
+      const fresh = await TemplateAPI.get(tpl.id);
+      setTpl(fresh);
       setDirty(false);
-      toast.success('Template saved');
+      toast.success('Saved', {
+        description: `Template v${updated.version} saved.`,
+      });
     } catch (e: any) {
       toast.error('Save failed', { description: e.message });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -75,9 +105,17 @@ export default function TemplateEditorClient({
     }
   };
 
-  const handleCancel = () => {
-    setTpl(initialTemplate);
-    setDirty(false);
+  const handleRevert = async () => {
+    try {
+      const fresh = await TemplateAPI.get(tpl.id);
+      setTpl(fresh);
+      setDirty(false);
+      toast.message('Reverted', {
+        description: 'Returned to last saved state.',
+      });
+    } catch (e: any) {
+      toast.error('Revert failed', { description: e.message });
+    }
   };
 
   return (
@@ -97,21 +135,14 @@ export default function TemplateEditorClient({
             onChange={(e) => setSubject(e.target.value.toUpperCase())}
             disabled={!isAdmin}
           />
-          <Input
-            className="flex-1"
-            placeholder="Description"
-            value={tpl.description ?? ''}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={!isAdmin}
-          />
           <div className="ml-auto flex items-center gap-2">
-            <span title="Revert Changes">
-              <Button variant="ghost" onClick={handleCancel}>
-                <Undo />
-              </Button>
-            </span>
             {isAdmin && (
               <>
+                <span title="Revert Changes">
+                  <Button variant="ghost" onClick={handleRevert}>
+                    <Undo />
+                  </Button>
+                </span>
                 <span title="Save">
                   <Button
                     variant="ghost"
@@ -158,6 +189,7 @@ export default function TemplateEditorClient({
           rows={tpl.rows ?? []}
           onChange={onRowsChange}
           readOnly={!isAdmin}
+          dirty={dirty}
         />
       </div>
     </div>

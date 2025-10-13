@@ -12,18 +12,22 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Layers, Upload } from 'lucide-react';
+import { MoreVertical, Layers, Upload, Trash } from 'lucide-react';
 import { RubricTemplate } from '@/lib/types';
 import { TemplateAPI } from '@/lib/api';
 import { toast } from 'sonner';
 
+interface Props {
+  item: RubricTemplate;
+  isAdmin: boolean;
+  onDeleteRequest?: (id: string) => void;
+}
+
 export default function TemplateCard({
   item,
   isAdmin,
-}: {
-  item: RubricTemplate;
-  isAdmin: boolean;
-}) {
+  onDeleteRequest,
+}: Props) {
   const router = useRouter();
 
   const publish = async () => {
@@ -76,6 +80,16 @@ export default function TemplateCard({
             >
               <DropdownMenuItem onClick={publish}>
                 <Upload className="mr-2 h-4 w-4" /> Publish new version
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteRequest?.(item.id);
+                }}
+              >
+                <Trash className="mr-2 h-4 w-4" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

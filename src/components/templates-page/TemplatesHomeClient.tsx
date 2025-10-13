@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import TemplateCard from './TemplateCard';
-// (Optional) you can add a table view analogous to RubricTable
+import ConfirmDeleteDialog from '../my-rubrics-page/ConfirmDeleteDialog';
 
 type SortKey = 'updated' | 'name' | 'subject';
 type ViewKey = 'grid' | 'list';
@@ -27,6 +27,9 @@ export default function TemplatesHomeClient({
   const [view, setView] = React.useState<ViewKey>('grid');
   const [query, setQuery] = React.useState('');
   const [sort, setSort] = React.useState<SortKey>('updated');
+  const [deleteTarget, setDeleteTarget] = React.useState<RubricTemplate | null>(
+    null,
+  );
 
   // Fetch only if SSR gave nothing
   React.useEffect(() => {
@@ -70,13 +73,40 @@ export default function TemplatesHomeClient({
     return rows;
   }, [templates, query, sort]);
 
+  const requestDelete = (id: string) => {
+    const item = templates.find((t) => t.id === id) || null;
+    setDeleteTarget(item);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const deleted = deleteTarget;
+
+    // optimistic remove
+    setTemplates((prev) => prev.filter((t) => t.id !== deleted.id));
+    setDeleteTarget(null);
+
+    try {
+      await TemplateAPI.delete(deleted.id);
+      toast.success('Template deleted', {
+        description: `"${deleted.name}" was permanently removed.`,
+      });
+    } catch (e: any) {
+      // Roll back if API fails
+      setTemplates((prev) => [deleted, ...prev]);
+      toast.error('Delete failed', { description: e.message });
+    }
+  };
+
   return (
     <div className="relative min-h-screen">
       {/* Header */}
       <div className="absolute top-0 left-0 w-full z-10 bg-background px-10 py-3">
         <h1 className="text-[44px] font-semibold tracking-tight">Templates</h1>
         <p className="text-m text-muted-foreground">
-          {isAdmin ? 'Create, search, and manage shared templates as admin.' : 'Browse shared templates.'}
+          {isAdmin
+            ? 'Create, search, and manage shared templates as admin.'
+            : 'Browse shared templates.'}
         </p>
       </div>
 
@@ -95,8 +125,8 @@ export default function TemplatesHomeClient({
               onClick={async () => {
                 try {
                   const created = await TemplateAPI.create({
-                    name: `New Template ${Date.now()}`,
-                    subjectCode: 'SUBJ000',
+                    name: `New Template (${(new Date()).toISOString().slice(0, 10)})`,
+                    subjectCode: 'SUBJ00000',
                     description: '',
                     rows: [],
                   });
@@ -137,10 +167,23 @@ export default function TemplatesHomeClient({
         {!loading && filtered.length > 0 && (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
             {filtered.map((t) => (
-              <TemplateCard key={t.id} item={t} isAdmin={isAdmin} />
+              <TemplateCard
+                key={t.id}
+                item={t}
+                isAdmin={isAdmin}
+                onDeleteRequest={requestDelete}
+              />
             ))}
           </div>
         )}
+
+        {/* Confirm Delete Dialog */}
+        <ConfirmDeleteDialog
+          open={!!deleteTarget}
+          onOpenChange={(v) => !v && setDeleteTarget(null)}
+          itemName={deleteTarget?.name}
+          onConfirm={confirmDelete}
+        />
       </div>
     </div>
   );

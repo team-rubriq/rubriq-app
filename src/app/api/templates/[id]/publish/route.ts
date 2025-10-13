@@ -1,40 +1,54 @@
 // src/app/api/templates/[id]/publish/route.ts
 import { NextResponse } from 'next/server';
-import { withUser } from '../../../_lib/supabase';
+import { createClient } from '@/app/utils/supabase/server';
+import { requireAdmin } from '../../../_lib/admin-guard';
 import { mapTemplate } from '../../../_lib/mappers';
 
 export async function POST(_: Request, { params }: { params: { id: string } }) {
-  const { supabase, user, error } = await withUser();
-  if (error) return error;
+  const guard = await requireAdmin();
+  if (guard) return guard;
 
-  // TODO: admin check
+  const { id } = await params;
+  const supabase = await createClient();
+  const templateId = id;
 
-  const { data: cur, error: curErr } = await supabase
+  const { data: t, error: tErr } = await supabase
     .from('templates')
-    .select(`id, version`)
-    .eq('id', params.id)
+    .select('id, version')
+    .eq('id', templateId)
     .maybeSingle();
+  if (tErr || !t)
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  if (curErr || !cur) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const newVersion = (t.version ?? 1) + 1;
 
-  const { error: upErr } = await supabase
+  // 1) bump version
+  const { error: uErr } = await supabase
     .from('templates')
-    .update({ version: (cur.version ?? 1) + 1 })
-    .eq('id', params.id);
+    .update({ version: newVersion, updated_at: new Date().toISOString() })
+    .eq('id', templateId);
+  if (uErr) return NextResponse.json({ error: uErr.message }, { status: 400 });
 
-  if (upErr) return NextResponse.json({ error: upErr.message }, { status: 400 });
+  // 2) mark linked rubrics as update-available
+  const { error: rErr } = await supabase
+    .from('rubrics')
+    .update({ status: 'update-available' })
+    .eq('template_id', templateId)
+    .lt('template_version', newVersion);
+  if (rErr) {
+    // non-fatal; log if you want
+  }
 
-  const { data: tpl } = await supabase
+  // 3) return updated template
+  const { data: t2, error: t2Err } = await supabase
     .from('templates')
-    .select(`id, name, subject_code, version, row_count, description, updated_at, created_by`)
-    .eq('id', params.id)
+    .select(
+      'id, name, subject_code, version, description, updated_at, created_by',
+    )
+    .eq('id', templateId)
     .maybeSingle();
+  if (t2Err || !t2)
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const { data: trows } = await supabase
-    .from('template_rows')
-    .select(`id, position, task, ai_use_level, instructions, examples, acknowledgement`)
-    .eq('template_id', params.id)
-    .order('position', { ascending: true });
-
-  return NextResponse.json(mapTemplate(tpl, trows ?? []));
+  return NextResponse.json(mapTemplate(t2));
 }

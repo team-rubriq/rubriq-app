@@ -36,15 +36,15 @@ export function mapRubric(r: any, rows?: any[]): Rubric {
   };
 }
 
-export function mapTemplateRow(tw: any): TemplateRow {
+export function mapTemplateRow(r: any): TemplateRow {
   return {
-    id: tw.id,
-    position: tw.position ?? 0,
-    task: tw.task ?? '',
-    aiUseLevel: tw.ai_use_level ?? '',
-    instructions: tw.instructions ?? '',
-    examples: tw.examples ?? '',
-    acknowledgement: tw.acknowledgement ?? '',
+    id: r.id,
+    position: r.position ?? 0,
+    task: r.task ?? '',
+    aiUseLevel: r.ai_use_level ?? '',
+    instructions: r.instructions ?? '',
+    examples: r.examples ?? '',
+    acknowledgement: r.acknowledgement ?? '',
   };
 }
 

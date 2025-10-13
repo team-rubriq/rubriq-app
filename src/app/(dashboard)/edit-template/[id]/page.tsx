@@ -6,11 +6,12 @@ import TemplateEditorClient from '@/components/edit-template-page/TemplateEditor
 import type { RubricTemplate, TemplateRow } from '@/lib/types';
 
 export default async function Page({ params }: { params: { id: string } }) {
+  const { id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  if (!user) redirect('/signin');
 
   const { isAdmin } = await getIsAdmin();
 
@@ -20,7 +21,7 @@ export default async function Page({ params }: { params: { id: string } }) {
     .select(
       'id, name, subject_code, version, description, updated_at, created_by',
     )
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle();
 
   if (tErr || !t) return notFound();

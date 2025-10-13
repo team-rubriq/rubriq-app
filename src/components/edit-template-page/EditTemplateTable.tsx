@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '../ui/badge';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -21,15 +22,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { EllipsisVerticalIcon, Copy, Trash2, Plus } from 'lucide-react';
 
+interface Props {
+  rows: TemplateRow[];
+  onChange: (rows: TemplateRow[]) => void;
+  readOnly?: boolean;
+  dirty: boolean;
+}
+
 export default function EditTemplateTable({
   rows,
   onChange,
   readOnly = false,
-}: {
-  rows: TemplateRow[];
-  onChange: (rows: TemplateRow[]) => void;
-  readOnly?: boolean;
-}) {
+  dirty,
+}: Props) {
   const update = (i: number, patch: Partial<TemplateRow>) => {
     const next = rows.slice();
     next[i] = { ...next[i], ...patch };
@@ -80,6 +85,18 @@ export default function EditTemplateTable({
 
   return (
     <div className="rounded-2xl border overflow-x-auto">
+      <div className="p-3 flex justify-between items-center text-sm text-muted-foreground">
+        <div className="">
+          Click any cell to type. Use
+          <span className="mx-1">
+            <Badge variant="secondary">
+              <kbd>⌘/Ctrl </kbd>+<kbd>S</kbd>{' '}
+            </Badge>
+          </span>
+          to save.
+        </div>
+        <div>{dirty && <div>Unsaved changes...</div>}</div>
+      </div>
       <Table className="w-full table-fixed border">
         <TableHeader>
           <TableRow className="divide-x divide-border bg-chart-3/5 hover:bg-chart-3/5">

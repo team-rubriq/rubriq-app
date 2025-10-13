@@ -38,10 +38,7 @@ export default function RubricEditorClient({
       e.returnValue = '';
     };
     window.addEventListener('beforeunload', onBeforeUnload);
-    return () =>
-      window.removeEventListener('beforeunload', onBeforeunload as any);
-    // NB: TS happy cast below:
-    function onBeforeunload(e: BeforeUnloadEvent) {}
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [dirty]);
 
   // keyboard shortcuts: Cmd/Ctrl+S to save
@@ -105,7 +102,7 @@ export default function RubricEditorClient({
         description: 'Returned to last saved state.',
       });
     } catch (e: any) {
-      toast.error('Reload failed', { description: e.message });
+      toast.error('Revert failed', { description: e.message });
     }
   };
 
@@ -283,7 +280,11 @@ export default function RubricEditorClient({
               </Button>
             </span>
             <span title="Save">
-              <Button variant={'ghost'} onClick={handleSave} disabled={saving}>
+              <Button
+                variant={'ghost'}
+                onClick={handleSave}
+                disabled={saving || !dirty}
+              >
                 <Save className="" />
               </Button>
             </span>

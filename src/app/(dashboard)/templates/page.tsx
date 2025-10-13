@@ -10,7 +10,7 @@ export default async function Page() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  if (!user) redirect('/signin');
 
   const { isAdmin } = await getIsAdmin();
 
@@ -39,7 +39,7 @@ export default async function Page() {
 
   return (
     <TemplatesHomeClient
-      initialTemplates={initialTemplates}
+      initialTemplates={[]}
       isAdmin={isAdmin}
     />
   );

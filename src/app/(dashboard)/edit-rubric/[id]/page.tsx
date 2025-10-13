@@ -16,7 +16,7 @@ export default async function Page({ params }: Params) {
     data: { user },
     error: userErr,
   } = await supabase.auth.getUser();
-  if (userErr || !user) redirect('/login');
+  if (userErr || !user) redirect('/signin');
 
   // ---- Load rubric ----
   const { data: r, error: rErr } = await supabase

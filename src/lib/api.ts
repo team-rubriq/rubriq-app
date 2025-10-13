@@ -104,6 +104,7 @@ export const RubricAPI = {
     ),
 };
 
+// TemplateAPI: Provides functions to interact with template-related API endpoints
 export const TemplateAPI = {
   // List all templates
   list: async (): Promise<RubricTemplate[]> =>
@@ -117,7 +118,7 @@ export const TemplateAPI = {
       await fetch(`/api/templates/${id}`, { cache: 'no-store' }),
     ),
 
-  // Create a new template
+  // Create a new template (admin only)
   create: async (payload: {
     name: string;
     subjectCode: string;
@@ -132,7 +133,21 @@ export const TemplateAPI = {
       }),
     ),
 
-  // Update template rows
+  // Rename a template (admin only)
+  rename: async (
+    id: string,
+    name: string,
+    subjectCode?: string,
+  ): Promise<RubricTemplate> =>
+    j<RubricTemplate>(
+      await fetch(`/api/templates/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, subjectCode }),
+      }),
+    ),
+
+  // Update template rows (admin only)
   updateRows: async (
     id: string,
     rows: TemplateRow[],
@@ -146,9 +161,22 @@ export const TemplateAPI = {
       }),
     ),
 
-  // Publish a new version of a template
+  // Publish a new version of a template (admin only)
   publishNewVersion: async (id: string): Promise<RubricTemplate> =>
     j<RubricTemplate>(
       await fetch(`/api/templates/${id}/publish`, { method: 'POST' }),
     ),
+
+  // Delete a template (admin only)
+  delete: async (id: string): Promise<void> => {
+    const res = await fetch(`/api/templates/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      let msg = `${res.status} ${res.statusText}`;
+      try {
+        const body = await res.json();
+        msg = body.error?.message ?? JSON.stringify(body);
+      } catch {}
+      throw new Error(msg);
+    }
+  },
 };
