@@ -140,9 +140,8 @@ export default function SignUpPage() {
           {success && (
             <Alert>
               <AlertDescription>
-                Registration successful as{' '}
-                <strong>{selectedRole || 'user'}</strong>Please check your email
-                to confirm your account.
+                Registration successful! Please check your email to confirm
+                your account.
               </AlertDescription>
             </Alert>
           )}

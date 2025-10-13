@@ -1,37 +1,37 @@
-export type RubricStatus = "active" | "update-available";
+export type RubricStatus = 'active' | 'update-available';
 
 export interface RubricRow {
-  id?: string;                   // absent for new rows
+  id?: string; // absent for new rows
   position: number;
   templateRowId?: string | null; // if derived from a template row
-  task: string;                  // column 1
-  aiUseLevel: string;            // column 2
-  instructions: string;          // column 3
-  examples: string;              // column 4
-  acknowledgement: string;       // column 5
+  task: string; // column 1
+  aiUseLevel: string; // column 2
+  instructions: string; // column 3
+  examples: string; // column 4
+  acknowledgement: string; // column 5
 }
 
 export interface TemplateRow {
   id?: string;
   position: number;
-  task: string;                  // column 1
-  aiUseLevel: string;            // column 2
-  instructions: string;          // column 3
-  examples: string;              // column 4
-  acknowledgement: string;       // column 5
+  task: string; // column 1
+  aiUseLevel: string; // column 2
+  instructions: string; // column 3
+  examples: string; // column 4
+  acknowledgement: string; // column 5
 }
 
 export interface Rubric {
   id: string;
   name: string;
-  subjectCode: string;             // e.g. "COMP30023"
-  rowCount: number;                // number of rubric rows
-  version: number;                 // instance version
-  templateId?: string | null;      // if derived from template
+  subjectCode: string; // e.g. "COMP30023"
+  rowCount: number; // number of rubric rows
+  version: number; // instance version
+  templateId?: string | null; // if derived from template
   templateVersion?: number | null; // template version the instance was created from
-  updatedAt: string;               // ISO date string
+  updatedAt: string; // ISO date string
   status: RubricStatus;
-  ownerId: string;                 // current user id (fake for now)
+  ownerId: string; // current user id (fake for now)
   shared?: boolean;
   rows?: RubricRow[];
 }
@@ -46,4 +46,14 @@ export interface RubricTemplate {
   updatedAt: string;
   createdBy: string;
   rows?: TemplateRow[];
+}
+
+export interface Profile {
+  id: string;
+  email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  avatar: string | null; // path (e.g. '/avatars/avatar3.svg')
+  created_at?: string;
+  role?: 'admin' | 'user';
 }
