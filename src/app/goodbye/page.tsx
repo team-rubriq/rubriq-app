@@ -1,4 +1,3 @@
-// src/app/goodbye/page.tsx
 'use client';
 
 import { useEffect } from 'react';

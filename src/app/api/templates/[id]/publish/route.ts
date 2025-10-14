@@ -1,4 +1,3 @@
-// src/app/api/templates/[id]/publish/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@/app/utils/supabase/server';
 import { requireAdmin } from '../../../_lib/admin-guard';
@@ -8,7 +7,7 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
   const guard = await requireAdmin();
   if (guard) return guard;
 
-  const { id } = await params;
+  const { id } = params;
   const supabase = await createClient();
   const templateId = id;
 

@@ -1,4 +1,3 @@
-// src/app/api/_lib/admin-guard.ts
 import { createClient } from '@/app/utils/supabase/server';
 import { NextResponse } from 'next/server';
 

@@ -1,4 +1,3 @@
-// magic-link login, no siderbar
 'use client';
 
 import { FormEvent, useState, useEffect } from 'react';

@@ -1,4 +1,3 @@
-// uses <SidebarNav/> (Home, CUS Library, USL Library, Profile)
 import SidebarNav from '@/components/SidebarNav';
 import { createClient } from '../utils/supabase/server';
 

@@ -1,4 +1,3 @@
-// src/components/edit-template-page/TemplateEditorClient.tsx
 'use client';
 
 import * as React from 'react';

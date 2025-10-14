@@ -1,4 +1,3 @@
-// src/app/(dashboard)/edit-template/[id]/page.tsx
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/app/utils/supabase/server';
 import { getIsAdmin } from '@/app/api/_lib/is-admin';
@@ -6,7 +5,7 @@ import TemplateEditorClient from '@/components/edit-template-page/TemplateEditor
 import type { RubricTemplate, TemplateRow } from '@/lib/types';
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const { id } = await params;
+  const { id } = params;
   const supabase = await createClient();
   const {
     data: { user },

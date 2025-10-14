@@ -1,4 +1,3 @@
-// src/app/api/_lib/mappers.ts
 import type {
   Rubric,
   RubricRow,

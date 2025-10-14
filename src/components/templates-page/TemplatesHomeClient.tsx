@@ -1,4 +1,3 @@
-// src/components/templates-page/TemplatesHomeClient.tsx
 'use client';
 
 import * as React from 'react';

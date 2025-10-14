@@ -1,4 +1,3 @@
-// src/app/api/rubrics/[id]/apply-template-updates/route.ts
 import { NextResponse } from 'next/server';
 import { withUser } from '../../../_lib/supabase';
 import { mapRubric } from '../../../_lib/mappers';
@@ -7,7 +6,7 @@ export async function POST(
   req: Request,
   { params }: { params: { id: string } },
 ) {
-  const { id } = await params;
+  const { id } = params;
   const { supabase, user, error } = await withUser();
   if (error) return error;
 

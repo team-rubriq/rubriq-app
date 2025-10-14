@@ -1,4 +1,3 @@
-// src/components/templates-page/TemplateCard.tsx
 'use client';
 
 import { useRouter } from 'next/navigation';

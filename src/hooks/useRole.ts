@@ -1,4 +1,3 @@
-// hooks/useRole.ts
 import { useEffect, useState } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 

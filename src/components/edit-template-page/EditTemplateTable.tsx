@@ -1,4 +1,3 @@
-// src/components/edit-template-page/TemplateRowsTable.tsx
 'use client';
 
 import { TemplateRow } from '@/lib/types';

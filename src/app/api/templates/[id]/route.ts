@@ -4,7 +4,7 @@ import { requireAdmin } from '../../_lib/admin-guard';
 import { mapTemplate, mapTemplateRow } from '../../_lib/mappers';
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const { id } = await params;
+  const { id } = params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -41,7 +41,7 @@ export async function PATCH(
   const guard = await requireAdmin();
   if (guard) return guard;
 
-  const { id } = await params;
+  const { id } = params;
   const supabase = await createClient();
   const body = await req.json().catch(() => ({}) as any);
   const { name, subjectCode, description } = body ?? {};
@@ -108,7 +108,7 @@ export async function DELETE(
   const guard = await requireAdmin();
   if (guard) return guard;
 
-  const { id } = await params;
+  const { id } = params;
   const supabase = await createClient();
 
   // Hard delete template; template_rows should have FK ON DELETE CASCADE.

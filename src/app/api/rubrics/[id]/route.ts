@@ -3,7 +3,7 @@ import { withUser } from '../../_lib/supabase';
 import { mapRubric } from '../../_lib/mappers';
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const { id } = await params;
+  const { id } = params;
   const { supabase, error } = await withUser();
   if (error) return error;
 
@@ -36,7 +36,7 @@ export async function PATCH(
   { params }: { params: { id: string } },
 ) {
   const { supabase, user, error } = await withUser();
-  const { id } = await params;
+  const { id } = params;
   if (error) return error;
 
   const body = await req.json();
@@ -70,7 +70,7 @@ export async function DELETE(
   _: Request,
   { params }: { params: { id: string } },
 ) {
-  const { id } = await params;
+  const { id } = params;
   const { supabase, user, error } = await withUser();
   if (error) return error;
 
