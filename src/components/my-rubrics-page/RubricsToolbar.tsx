@@ -27,6 +27,7 @@ interface Props {
   onView: (v: ViewKey) => void;
   totalCount: number;
   onCreateRubric?: () => void;
+  updatesCount: number;
 }
 
 export default function RubricsToolbar({
@@ -40,6 +41,7 @@ export default function RubricsToolbar({
   onView,
   totalCount,
   onCreateRubric,
+  updatesCount
 }: Props) {
   return (
     <div className="flex flex-col gap-4">
@@ -92,9 +94,7 @@ export default function RubricsToolbar({
         <Tabs value={filter} onValueChange={(v) => onFilter(v as any)}>
           <TabsList>
             <TabsTrigger value="all">All ({totalCount})</TabsTrigger>
-            <TabsTrigger value="mine">Mine</TabsTrigger>
-            <TabsTrigger value="shared">Shared</TabsTrigger>
-            <TabsTrigger value="updates">Updates</TabsTrigger>
+            <TabsTrigger value="updates">Updates available ({updatesCount})</TabsTrigger>
           </TabsList>
         </Tabs>
         <Button variant={'outline'} onClick={onCreateRubric}>

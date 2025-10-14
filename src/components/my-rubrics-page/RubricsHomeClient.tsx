@@ -331,6 +331,7 @@ export default function RubricsHomeClient({
           onView={setView}
           totalCount={totalCount}
           onCreateRubric={() => setCreateOpen(true)}
+          updatesCount={rubrics.filter(r => r.status === 'update-available').length}
         />
 
         {/* Loading state */}
