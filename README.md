@@ -2,50 +2,43 @@
 ```
 src/
   app/
-    page.tsx               # redirects to /my-rubrics if logged in, else /login
+    page.tsx               # PAGE: redirects to /my-rubrics if logged in.
     layout.tsx             # configure fonts and Toaster
+
     (dashboard)/
       layout.tsx           # sidebar: My Rubrics, Profile, (+Templates if Admin)
-      my-rubrics/
-        page.tsx           # Google Drive-like "My Drive" list/grid
-      edit-rubric/
-        [id]/
-          page.tsx         # rubric editor (5 columns)
-          actions.ts       # server actions (save rows, rename, etc.)
-      profile/
-        page.tsx
-        actions.ts
-      rubric-repo/
-        page.tsx           # Admin: list templates by subject
-        new/
-          page.tsx         # Admin: new template (name, subject)
-        [templateId]/
-          page.tsx         # Admin: edit template rows
-          actions.ts
-    api/
-      export/
-        cus/
-          [id]/
-            route.ts       # returns .xlsx for a rubric
-    auth/
-      callback/
-        route.ts           # redirects to /home after log in
-    login/
-      page.tsx             # magic-link form (no sidebar)
-  components/
-    SidebarNav.tsx         
-    MyRubrics.tsx          # main "My Rubrics" component - includes RubricsToolbar, RubricCard, RubricTable
-    RubricsToolbar.tsx     # consists of search bar, sort by, grid/list view option
-    RubricCard.tsx         # for grid view
-    RubricTable.tsx        # for list view
-    CreateRubricModal.tsx  # modal for creating new rubric (from scratch or template)
-    TemplateCombobox.tsx   # dropdown box to let users search for rubric templates 
-    five-row-table/
-      index.tsx            # client component, 5 editable columns
-      row.tsx              # row editor
-      schema.ts            # zod validation for a row
+      my-rubrics/          # PAGE: all users view their own rubrics
+      edit-rubric/[id]/    # PAGE: rubric editor (5-column table)
+      templates/           # PAGE: all users view shared templates - admins can edit       
+      edit-template/[id]/  # PAGE: template editor (5-column table)
+      profile/        
+
+    (login)/
+      signin/
+      signup/
+
+    error/                 # PAGE: unexpected error
+    goodbye/               # PAGE: after account deletion
+    api/                   # API endpoints
+      _lib/
+      account/
+      rubric/
+      templates/
+
+    auth/callback/         # magic link handler after singup
+    utils/supabase/        # create Supabase client + middleware
+
+  components/              # grouped by page   
+    SidebarNav.tsx     
+    my-rubrics-page/
+    edit-rubric-page/
+    templates-page/
+    edit-templats-page/
     ui/                    # shadcn components
-      ...
+
+  hooks/
+  lib/
+
 ```
 
 # Next.js
