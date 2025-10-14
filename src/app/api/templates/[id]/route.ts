@@ -1,10 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/app/utils/supabase/server';
 import { requireAdmin } from '../../_lib/admin-guard';
 import { mapTemplate, mapTemplateRow } from '../../_lib/mappers';
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(
+  _: Request,
+  ctx: { params: { id: string } } | { params: Promise<{ id: string }> },
+) {
+  const rawParams = ctx.params;
+  const { id } = await rawParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -35,13 +39,14 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 }
 
 export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } },
+  req: NextRequest,
+  ctx: { params: { id: string } } | { params: Promise<{ id: string }> },
 ) {
   const guard = await requireAdmin();
   if (guard) return guard;
 
-  const { id } = params;
+  const rawParams = ctx.params;
+  const { id } = await rawParams;
   const supabase = await createClient();
   const body = await req.json().catch(() => ({}) as any);
   const { name, subjectCode, description } = body ?? {};
@@ -103,12 +108,13 @@ export async function PATCH(
 
 export async function DELETE(
   _: Request,
-  { params }: { params: { id: string } },
+  ctx: { params: { id: string } } | { params: Promise<{ id: string }> },
 ) {
   const guard = await requireAdmin();
   if (guard) return guard;
 
-  const { id } = params;
+  const rawParams = ctx.params;
+  const { id } = await rawParams;
   const supabase = await createClient();
 
   // Hard delete template; template_rows should have FK ON DELETE CASCADE.

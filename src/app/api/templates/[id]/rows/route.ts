@@ -1,16 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/app/utils/supabase/server';
 import { requireAdmin } from '../../../_lib/admin-guard';
 import { mapTemplate } from '../../../_lib/mappers';
 
 export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } },
+  req: NextRequest,
+  ctx: { params: { id: string } } | { params: Promise<{ id: string }> },
 ) {
   const guard = await requireAdmin();
   if (guard) return guard;
 
-  const { id } = params;
+   const rawParams = ctx.params;
+  const { id } = await rawParams;
   const supabase = await createClient();
   const { rows = [], bumpVersion = true } = await req.json();
 

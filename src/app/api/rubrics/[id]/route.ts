@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { withUser } from '../../_lib/supabase';
 import { mapRubric } from '../../_lib/mappers';
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(
+  _: Request,
+  ctx: { params: { id: string } } | { params: Promise<{ id: string }> },
+) {
+  const rawParams = ctx.params;
+  const { id } = await rawParams;
   const { supabase, error } = await withUser();
   if (error) return error;
 
@@ -32,11 +36,12 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 }
 
 export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } },
+  req: NextRequest,
+  ctx: { params: { id: string } } | { params: Promise<{ id: string }> },
 ) {
+  const rawParams = ctx.params;
+  const { id } = await rawParams;
   const { supabase, user, error } = await withUser();
-  const { id } = params;
   if (error) return error;
 
   const body = await req.json();
@@ -68,9 +73,10 @@ export async function PATCH(
 
 export async function DELETE(
   _: Request,
-  { params }: { params: { id: string } },
+  ctx: { params: { id: string } } | { params: Promise<{ id: string }> },
 ) {
-  const { id } = params;
+  const rawParams = ctx.params;
+  const { id } = await rawParams;
   const { supabase, user, error } = await withUser();
   if (error) return error;
 

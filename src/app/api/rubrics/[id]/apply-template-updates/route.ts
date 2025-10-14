@@ -1,12 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { withUser } from '../../../_lib/supabase';
 import { mapRubric } from '../../../_lib/mappers';
 
 export async function POST(
-  req: Request,
-  { params }: { params: { id: string } },
+  req: NextRequest,
+  ctx: { params: { id: string } } | { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const rawParams = ctx.params;
+  const { id } = await rawParams;
   const { supabase, user, error } = await withUser();
   if (error) return error;
 
