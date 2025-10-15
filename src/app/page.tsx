@@ -4,7 +4,7 @@ import LoginPage from './(login)/signin/page';
 
 export const metadata = {
   title: 'Rubriq',
-  description: '',
+  description: 'Create Customisable AI Assessment Scales',
 };
 
 export default async function Home() {
