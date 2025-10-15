@@ -104,8 +104,8 @@ export default function TemplatesHomeClient({
         <h1 className="text-[44px] font-semibold tracking-tight">Templates</h1>
         <p className="text-m text-muted-foreground">
           {isAdmin
-            ? 'Create, search, and manage shared templates as admin.'
-            : 'Browse shared templates.'}
+            ? 'Create, search, and manage shared templates as an admin.'
+            : 'Browse shared templates as a subject coordinator.'}
         </p>
       </div>
 

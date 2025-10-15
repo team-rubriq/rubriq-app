@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -29,6 +29,14 @@ export default function SignUpPage() {
   const [selectedRole, setSelectedRole] = useState<'admin' | 'user' | null>(
     null,
   );
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        router.replace('/');
+      }
+    });
+  }, [router, supabase]);
 
   // Modified handler that accepts a role parameter
   const handleSignUp = async (role: 'admin' | 'user') => {

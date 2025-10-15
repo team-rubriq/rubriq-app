@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Profile } from '@/lib/types';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
 
 function Modal({
   open,
@@ -55,6 +56,7 @@ export default function ProfilePage() {
   const [lastName, setLastName] = useState('');
   const [avatar, setAvatar] = useState<string>('');
   const [selectedAvatar, setSelectedAvatar] = useState<string>('');
+  const [role, setRole] = useState<string>('');
 
   // password fields
   const [newPassword, setNewPassword] = useState('');
@@ -101,6 +103,7 @@ export default function ProfilePage() {
         setLastName(profile?.last_name ?? '');
         setAvatar(profile?.avatar ?? defaultAvatars[0]);
         setSelectedAvatar(profile?.avatar ?? defaultAvatars[0]);
+        setRole(profile?.role ?? '');
       } catch (e: any) {
         toast.error('Failed to load profile', { description: e.message });
         router.push('/signin');
@@ -235,11 +238,11 @@ export default function ProfilePage() {
       </div>
 
       {/* Body */}
-      <div className="flex justify-start gap-30">
+      <div className="flex justify-center gap-40">
         {/* Avatar */}
-        <div className="flex flex-col pt-33 px-10 gap-2 items-center space-y-2 ml-30 mt-10">
+        <div className="flex flex-col pt-33 px-10 gap-2 items-center space-y-2 mt-10">
           <Avatar
-            className="w-30 h-30 cursor-pointer"
+            className="w-50 h-50 cursor-pointer"
             onClick={() => setAvatarModalOpen(true)}
           >
             <AvatarImage src={avatar || ''} alt="Profile" />
@@ -249,6 +252,7 @@ export default function ProfilePage() {
             variant="outline"
             size="sm"
             onClick={() => setAvatarModalOpen(true)}
+            className="mb-10"
           >
             Change Avatar
           </Button>
@@ -257,6 +261,9 @@ export default function ProfilePage() {
               ? `Signed in as ${email}`
               : 'Update your account details below'}
           </p>
+          <Badge variant="outline">
+            {role === 'admin' ? 'ADMIN' : 'SUBJECT COORDINATOR'}
+          </Badge>
         </div>
 
         {/* Modal */}

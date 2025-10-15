@@ -20,6 +20,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { Badge } from './ui/badge';
 import { createClient } from '@/app/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -31,11 +32,13 @@ const links = [
 interface SidebarNavProps {
   fullName: string;
   avatar?: string;
+  role?: string;
 }
 
 export default function SidebarNav({
   fullName,
   avatar = '/avatar.svg',
+  role,
 }: SidebarNavProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -49,6 +52,12 @@ export default function SidebarNav({
           <span className="text-lg font-bold tracking-tight">
             Customisable <br /> AI Use Scales
           </span>
+        </div>
+
+        <div className="flex justify-start pt-5 px-5">
+          <Badge variant="outline">
+            {role === 'admin' ? 'ADMIN' : 'SUBJECT COORDINATOR'}
+          </Badge>
         </div>
 
         {/* Navigation */}

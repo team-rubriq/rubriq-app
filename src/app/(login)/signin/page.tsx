@@ -34,6 +34,16 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Automatically redirect to home
+  useEffect(() => {
+  const supabase = createClient();
+  supabase.auth.getUser().then(({ data }) => {
+    if (data.user) {
+      router.replace('/');
+    }
+  });
+}, [router]);
+
   // Sign-in handler
   const handleSignIn = async (e: FormEvent) => {
     const supabase = createClient();
