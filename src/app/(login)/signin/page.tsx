@@ -104,7 +104,7 @@ export default function LoginPage() {
               <h1 className="text-3xl font-bold tracking-tighter">Rubriq.</h1>
             </div>
             <p className="text-muted-foreground">
-              Welcome back! Please sign in to view your templates.
+              Welcome back! Please sign in to view your rubrics.
             </p>
           </div>
           {signupSuccess && (

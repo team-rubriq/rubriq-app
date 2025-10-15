@@ -26,10 +26,10 @@ export default function GoodbyePage() {
       <Card className="w-full max-w-lg shadow-xl border-2 rounded-2xl">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-3xl tracking-tight">
-            Goodbye for now 👋
+            Goodbye for now.
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Your account session has ended. You can come back any time.
+            Your account session has ended. You can come back any time!
           </p>
         </CardHeader>
 

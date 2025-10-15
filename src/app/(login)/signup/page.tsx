@@ -147,7 +147,7 @@ export default function SignUpPage() {
           <div className="text-center space-y-3">
             <h1 className="text-3xl font-bold tracking-tighter">Sign Up</h1>
             <p className="text-muted-foreground">
-              Please sign up to save and view templates!
+              Please sign up to making your own rubrics!
             </p>
           </div>
 
