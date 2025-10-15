@@ -3,6 +3,11 @@ import { createClient } from '@/app/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import type { Rubric } from '@/lib/types';
 
+export const metadata = {
+  title: 'My Rubrics | Rubriq',
+  description: '',
+};
+
 export default async function Page() {
   const supabase = await createClient();
 

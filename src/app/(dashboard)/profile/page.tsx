@@ -5,7 +5,6 @@ import { createClient } from '@/app/utils/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Profile } from '@/lib/types';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
@@ -69,6 +68,10 @@ export default function ProfilePage() {
 
   // Modal state
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+
+  useEffect(() => {
+    document.title = `My Profile | Rubriq`;
+  })
 
   // Load current user + profile
   useEffect(() => {

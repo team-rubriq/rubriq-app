@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import icon from '@/../public/icon.svg'
+import icon from '@/../public/icon.svg';
 
 export default function SignUpPage() {
   const supabase = createClient();
@@ -26,6 +26,10 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    document.title = `Sign Up | Rubriq`;
+  });
 
   // Track which button was clicked
   const [selectedRole, setSelectedRole] = useState<'admin' | 'user' | null>(

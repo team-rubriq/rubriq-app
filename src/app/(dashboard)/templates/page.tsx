@@ -4,6 +4,11 @@ import { getIsAdmin } from '@/app/api/_lib/is-admin';
 import TemplatesHomeClient from '@/components/templates-page/TemplatesHomeClient';
 import type { RubricTemplate } from '@/lib/types';
 
+export const metadata = {
+  title: 'Templates | Rubriq',
+  description: '',
+};
+
 export default async function Page() {
   const supabase = await createClient();
   const {

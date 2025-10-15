@@ -4,8 +4,28 @@ import { getIsAdmin } from '@/app/api/_lib/is-admin';
 import TemplateEditorClient from '@/components/edit-template-page/TemplateEditorClient';
 import type { RubricTemplate, TemplateRow } from '@/lib/types';
 
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return {
+      title: 'Edit Template | Rubriq',
+      description: '',
+    };
+  }
+
+  const { isAdmin } = await getIsAdmin();
+
+  return {
+    title: isAdmin ? 'Edit Template | Rubriq' : 'View Template | Rubriq',
+    description: '',
+  };
+}
+
 export default async function Page({ params }: { params: { id: string } }) {
-  const { id } = params;
+  const { id } =  params;
   const supabase = await createClient();
   const {
     data: { user },

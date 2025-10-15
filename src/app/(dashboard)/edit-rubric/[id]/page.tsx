@@ -3,6 +3,11 @@ import RubricEditorClient from '@/components/edit-rubric-page/RubricEditorClient
 import { createClient } from '@/app/utils/supabase/server';
 import type { Rubric, RubricRow, RubricTemplate } from '@/lib/types';
 
+export const metadata = {
+  title: 'Edit Rubric | Rubriq',
+  description: '',
+};
+
 interface Params {
   params: Promise<{ id: string }>;
 }

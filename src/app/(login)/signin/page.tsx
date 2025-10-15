@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 
 import { Eye, EyeOff, Mail, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import icon from '@/../public/icon.svg'
+import icon from '@/../public/icon.svg';
 
 export default function LoginPage() {
   // Code here
@@ -26,6 +26,10 @@ export default function LoginPage() {
   const [callbackErrorDescription, setCallbackErrorDescription] = useState('');
   const [signupSuccess, setSignupSuccess] = useState(false);
 
+  useEffect(() => {
+    document.title = `Sign In | Rubriq`;
+  });
+
   // Redirected from signup page/errors
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -38,13 +42,13 @@ export default function LoginPage() {
 
   // Automatically redirect to home
   useEffect(() => {
-  const supabase = createClient();
-  supabase.auth.getUser().then(({ data }) => {
-    if (data.user) {
-      router.replace('/');
-    }
-  });
-}, [router]);
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        router.replace('/');
+      }
+    });
+  }, [router]);
 
   // Sign-in handler
   const handleSignIn = async (e: FormEvent) => {
@@ -95,11 +99,9 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
           {/* The Header */}
           <div className="text-center space-y-3">
-            <div className='flex justify-center'>
+            <div className="flex justify-center">
               <Image src={icon} alt="Logo" width={30} height={30} />
-              <h1 className="text-3xl font-bold tracking-tighter">
-                Rubriq.
-              </h1>
+              <h1 className="text-3xl font-bold tracking-tighter">Rubriq.</h1>
             </div>
             <p className="text-muted-foreground">
               Welcome back! Please sign in to view your templates.
