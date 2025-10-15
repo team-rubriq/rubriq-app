@@ -3,6 +3,7 @@
 import { FormEvent, useState, useEffect } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { Label } from '@/components/ui/label';
 
 import { Eye, EyeOff, Mail, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import icon from '@/../public/icon.svg'
 
 export default function LoginPage() {
   // Code here
@@ -93,11 +95,14 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
           {/* The Header */}
           <div className="text-center space-y-3">
-            <h1 className="text-3xl font-bold tracking-tighter">
-              Welcome back!
-            </h1>
+            <div className='flex justify-center'>
+              <Image src={icon} alt="Logo" width={30} height={30} />
+              <h1 className="text-3xl font-bold tracking-tighter">
+                Rubriq.
+              </h1>
+            </div>
             <p className="text-muted-foreground">
-              Please login to view your templates
+              Welcome back! Please sign in to view your templates.
             </p>
           </div>
           {signupSuccess && (

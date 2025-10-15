@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
@@ -23,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from './ui/badge';
 import { createClient } from '@/app/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import icon from '@/../public/icon.svg'
 
 const links = [
   { href: '/my-rubrics', label: 'My Rubrics', icon: TableProperties },
@@ -48,9 +50,10 @@ export default function SidebarNav({
     <aside className="w-56 h-screen fixed flex flex-col justify-between bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       {/* Header */}
       <div>
-        <div className="flex items-center p-5 border-b border-sidebar-border">
-          <span className="text-lg font-bold tracking-tight">
-            Customisable <br /> AI Use Scales
+        <div className="flex items-center px-5 py-3 border-b border-sidebar-border justify-start">
+          <Image src={icon} alt="Logo" width={50} height={50} />
+          <span className="text-4xl font-semibold tracking-tight">
+            Rubriq.
           </span>
         </div>
 

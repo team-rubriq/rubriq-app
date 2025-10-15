@@ -3,6 +3,7 @@
 import { FormEvent, useState, useEffect } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import icon from '@/../public/icon.svg'
 
 export default function SignUpPage() {
   const supabase = createClient();
