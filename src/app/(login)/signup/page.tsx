@@ -262,28 +262,31 @@ export default function SignUpPage() {
             </div>
 
             {/* Role Buttons */}
-            <div className="flex gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => handleSignUp('admin')}
-                disabled={loading}
-              >
-                {loading && selectedRole === 'admin'
-                  ? 'Creating admin account...'
-                  : 'Register as Admin'}
-              </Button>
-              <Button
-                type="button"
-                className="flex-1"
-                onClick={() => handleSignUp('user')}
-                disabled={loading}
-              >
-                {loading && selectedRole === 'user'
-                  ? 'Creating user account...'
-                  : 'Register as User'}
-              </Button>
+            <div className="space-y-2">
+              <Label htmlFor="registerAs">Register as ...</Label>
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleSignUp('admin')}
+                  disabled={loading}
+                >
+                  {loading && selectedRole === 'admin'
+                    ? 'Creating account...'
+                    : 'Admin'}
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1"
+                  onClick={() => handleSignUp('user')}
+                  disabled={loading}
+                >
+                  {loading && selectedRole === 'user'
+                    ? 'Creating account...'
+                    : 'Subject Coordinator'}
+                </Button>
+              </div>
             </div>
           </form>
 
