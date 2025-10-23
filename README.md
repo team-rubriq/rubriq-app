@@ -1,3 +1,30 @@
+# Project overview
+**Rubriq** is a web platform designed to streamline the creation, customization, and management of **AI-use rubrics** for educators and institutions.
+It provides an intuitive interface for building structured evaluation templates, integrating AI-use scales, and maintaining version-controlled updates — all in one place.
+
+# Project objectives
+**Rubriq** aims to:
+
+1. **Simplify rubric creation and management**: allow instructors to quickly create or customize AI-use rubrics for different courses or assessments.
+
+2. **Ensure consistency and transparency in AI usage**: maintain shared templates that standardize how AI tools are declared and assessed across subjects.
+
+3. **Enable collaboration and scalability**: support multi-role functionality:
+    - Admins can create, edit, and publish shared templates.
+    - Users can clone or link templates to build course-specific rubrics.
+
+4. **Promote accountability and reproducibility**: track template version history and alert users when an updated version is available.
+
+5. **Provide export-ready documentation**: generate student declaration forms as downloadable Excel sheets.
+
+# Technology stack
+- **Frontend**: Next.js, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend & Database**: Supabase, PostgreSQL
+- **Auth & Access Control**: Supabase Auth, RLS
+- **File Handling & Export**: xlsx-js-style
+- **Deployment**: Vercel
+
+
 # `src` directory layout
 ```
 src/
