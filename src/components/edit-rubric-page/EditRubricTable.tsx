@@ -27,6 +27,7 @@ interface Props {
   onChange: (rows: RubricRow[]) => void;
   templateRows: TemplateRow[];
   dirty: boolean;
+  readOnly?: boolean;
 }
 
 function findTemplateRow(trs: TemplateRow[], id?: string | null) {
@@ -38,17 +39,20 @@ export default function EditRubricTable({
   onChange,
   templateRows,
   dirty,
+  readOnly = false,
 }: Props) {
   const reindex = (arr: RubricRow[]) =>
     arr.map((r, i) => ({ ...r, position: i }));
 
   const update = (i: number, patch: Partial<RubricRow>) => {
+    if (readOnly) return;
     const next = rows.slice();
     next[i] = { ...next[i], ...patch };
     onChange(reindex(next));
   };
 
   const addRow = (i?: number) => {
+    if (readOnly) return;
     const idx = typeof i === 'number' ? i + 1 : rows.length;
     const blank: RubricRow = {
       position: idx,
@@ -65,6 +69,7 @@ export default function EditRubricTable({
   };
 
   const deleteRow = (i: number) => {
+    if (readOnly) return;
     const next = rows.slice();
     next.splice(i, 1);
     onChange(reindex(next));
@@ -83,13 +88,19 @@ export default function EditRubricTable({
       <div className="rounded-2xl border overflow-x-auto">
         <div className="p-3 flex justify-between items-center text-sm text-muted-foreground">
           <div className="">
-            Click any cell to type. Use
-            <span className="mx-1">
-              <Badge variant="secondary">
-                <kbd>⌘/Ctrl </kbd>+<kbd>S</kbd>{' '}
-              </Badge>
-            </span>
-            to save.
+            {readOnly ? (
+              'Viewing in read-only mode'
+            ) : (
+              <>
+                Click any cell to type. Use
+                <span className="mx-1">
+                  <Badge variant="secondary">
+                    <kbd>⌘/Ctrl </kbd>+<kbd>S</kbd>{' '}
+                  </Badge>
+                </span>
+                to save.
+              </>
+            )}
           </div>
           <div>{dirty && <div>Unsaved changes...</div>}</div>
         </div>
@@ -103,7 +114,7 @@ export default function EditRubricTable({
                   {c}
                 </TableHead>
               ))}
-              <TableHead className="w-[40px]"></TableHead>
+              {!readOnly && <TableHead className="w-[40px]"></TableHead>}
             </TableRow>
           </TableHeader>
 
@@ -128,6 +139,8 @@ export default function EditRubricTable({
                       value={r.task}
                       onChange={(e) => update(i, { task: e.target.value })}
                       className="w-full h-full absolute inset-0 resize-none rounded-none border-none"
+                      readOnly={readOnly}
+                      disabled={readOnly}
                     />
                     {linked && trow && r.task !== trow.task && <CellChanged />}
                   </TableCell>
@@ -138,6 +151,8 @@ export default function EditRubricTable({
                         update(i, { aiUseLevel: e.target.value })
                       }
                       className="w-full h-full absolute inset-0 resize-none rounded-none border-none"
+                      readOnly={readOnly}
+                      disabled={readOnly}
                     />
                     {linked && trow && r.aiUseLevel !== trow.aiUseLevel && (
                       <CellChanged />
@@ -150,6 +165,8 @@ export default function EditRubricTable({
                         update(i, { instructions: e.target.value })
                       }
                       className="w-full h-full absolute inset-0 resize-none rounded-none border-none"
+                      readOnly={readOnly}
+                      disabled={readOnly}
                     />
                     {linked && trow && r.instructions !== trow.instructions && (
                       <CellChanged />
@@ -160,6 +177,8 @@ export default function EditRubricTable({
                       value={r.examples}
                       onChange={(e) => update(i, { examples: e.target.value })}
                       className="w-full h-full absolute inset-0 resize-none rounded-none border-none"
+                      readOnly={readOnly}
+                      disabled={readOnly}
                     />
                     {linked && trow && r.examples !== trow.examples && (
                       <CellChanged />
@@ -172,6 +191,8 @@ export default function EditRubricTable({
                         update(i, { acknowledgement: e.target.value })
                       }
                       className="w-full h-full absolute inset-0 resize-none rounded-none border-none"
+                      readOnly={readOnly}
+                      disabled={readOnly}
                     />
                     {linked &&
                       trow &&
@@ -180,36 +201,38 @@ export default function EditRubricTable({
                       )}
                   </TableCell>
 
-                  {/* Row actions */}
-                  <TableCell className="align-top flex justify-center">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                  {/* Row actions - only show if not read-only */}
+                  {!readOnly && (
+                    <TableCell className="align-top flex justify-center">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label="Row actions"
+                          >
+                            <EllipsisVerticalIcon />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
                           onClick={(e) => e.stopPropagation()}
-                          aria-label="Row actions"
                         >
-                          <EllipsisVerticalIcon />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <DropdownMenuItem onClick={() => addRow(i)}>
-                          <Plus className="h-4 w-4 mr-2" /> Add below
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => deleteRow(i)}
-                        >
-                          <Trash className="h-4 w-4 mr-2" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                          <DropdownMenuItem onClick={() => addRow(i)}>
+                            <Plus className="h-4 w-4 mr-2" /> Add below
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => deleteRow(i)}
+                          >
+                            <Trash className="h-4 w-4 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  )}
                 </TableRow>
               );
             })}
@@ -217,16 +240,19 @@ export default function EditRubricTable({
         </Table>
       </div>
 
-      <div className="mt-6 mb-20">
-        <Button
-          variant="outline"
-          className="w-full"
-          size="sm"
-          onClick={() => addRow()}
-        >
-          <Plus className="size-4" /> Add row
-        </Button>
-      </div>
+      {/* Only show add row button if not read-only */}
+      {!readOnly && (
+        <div className="mt-6 mb-20">
+          <Button
+            variant="outline"
+            className="w-full"
+            size="sm"
+            onClick={() => addRow()}
+          >
+            <Plus className="size-4" /> Add row
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

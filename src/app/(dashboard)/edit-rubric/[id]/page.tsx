@@ -1,3 +1,5 @@
+// app/edit-rubric/[id]/page.tsx
+
 import { notFound, redirect } from 'next/navigation';
 import RubricEditorClient from '@/components/edit-rubric-page/RubricEditorClient';
 import { createClient } from '@/app/utils/supabase/server';
@@ -10,10 +12,14 @@ export const metadata = {
 
 interface Params {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ readonly?: string }>;
 }
 
-export default async function Page({ params }: Params) {
+export default async function Page({ params, searchParams }: Params) {
   const { id } = await params;
+  const { readonly } = await searchParams;
+  const isReadOnly = readonly === 'true';
+
   const supabase = await createClient();
 
   // Auth
@@ -37,7 +43,8 @@ export default async function Page({ params }: Params) {
       template_id,
       template_version,
       updated_at,
-      shared
+      shared,
+      owner_id
     `,
     )
     .eq('id', id)
@@ -47,8 +54,14 @@ export default async function Page({ params }: Params) {
   if (rErr) notFound();
   if (!r) notFound();
 
-  // Optional: enforce ownership in UI (RLS should already protect this)
-  // if (r.owner_id !== user.id && !r.shared) notFound();
+  // Check if user is the owner
+  const isOwner = r.owner_id === user.id;
+
+  // If coming from statistics (readonly=true), allow view access
+  // Otherwise, enforce ownership/sharing rules
+  if (!isReadOnly && !isOwner && !r.shared) {
+    notFound();
+  }
 
   // ---- Load rubric rows ----
   const { data: rrows, error: rrErr } = await supabase
@@ -94,7 +107,7 @@ export default async function Page({ params }: Params) {
     templateVersion: r.template_version,
     updatedAt: r.updated_at,
     shared: r.shared ?? false,
-    ownerId: user.id,
+    ownerId: r.owner_id,
     rows,
   };
 
@@ -158,20 +171,17 @@ export default async function Page({ params }: Params) {
         createdBy: t.created_by,
         rows: templateRows,
       };
-
-      // Optional: recompute status if template is newer
-      // if (
-      //   (initialRubric.templateVersion ?? 0) < (linkedTemplate.version ?? 0)
-      // ) {
-      //   initialRubric = { ...initialRubric, status: 'update-available' };
-      // }
     }
   }
+
+  // Force readonly if not owner, or if explicitly requested
+  const shouldBeReadOnly = !isOwner || isReadOnly;
 
   return (
     <RubricEditorClient
       initialRubric={initialRubric}
       linkedTemplate={linkedTemplate}
+      readOnly={shouldBeReadOnly}
     />
   );
 }

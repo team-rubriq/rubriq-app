@@ -57,3 +57,42 @@ export interface Profile {
   created_at?: string;
   role?: 'admin' | 'user';
 }
+
+export interface TemplateUsageStats {
+  template_id: string;
+  template_name: string;
+  subject_code: string;
+  template_row_count: number;
+  total_rubric_rows_using_template: number;
+  unique_rubrics_using_template: number;
+  template_rows_used: number;
+  first_used_at: string | null;
+  last_used_at: string | null;
+  created_by_name?: string;
+  created_by_email?: string;
+}
+
+export interface TemplateUsageDetail {
+  rubric_id: string;
+  rubric_name: string;
+  rubric_subject_code: string;
+  rows_from_template: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TemplateUsageDetailResponse {
+  template: {
+    id: string;
+    name: string;
+    subject_code: string;
+    row_count?: number;
+  };
+  usage: TemplateUsageDetail[];
+  stats: {
+    total_rubric_rows: number;
+    unique_rubrics: number;
+    template_rows_used: number;
+    template_row_count: number;
+  };
+}

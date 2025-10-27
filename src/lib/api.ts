@@ -3,6 +3,9 @@ import type {
   RubricRow,
   RubricTemplate,
   TemplateRow,
+  TemplateUsageStats,
+  TemplateUsageDetail,
+  TemplateUsageDetailResponse,
 } from '@/lib/types';
 
 // Helper function to parse fetch responses and throw errors for non-OK responses
@@ -131,6 +134,18 @@ export const TemplateAPI = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       }),
+    ),
+
+  // Get template usage statistics (admin only)
+  getUsageStatistics: async (): Promise<TemplateUsageStats[]> =>
+    j<TemplateUsageStats[]>(
+      await fetch('/api/templates/statistics', { cache: 'no-store' }),
+    ),
+
+  // Get detailed usage for a specific template
+  getUsageDetails: async (id: string): Promise<TemplateUsageDetailResponse> =>
+    j<TemplateUsageDetailResponse>(
+      await fetch(`/api/templates/${id}/statistics`, { cache: 'no-store' }),
     ),
 
   // Rename a template (admin only)
