@@ -1,22 +1,24 @@
 // app/api/templates/[id]/statistics/route.ts
 
 import { createClient } from '@/app/utils/supabase/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
 // app/api/templates/[id]/statistics/route.ts
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } },
+  request: NextRequest,
+  ctx: { params: { id: string } } | { params: Promise<{ id: string }> },
 ) {
   try {
+    const rawParams = ctx.params;
+    const { id } = await rawParams;
     const supabase = await createClient();
 
     // Get template info
     const { data: template, error: templateError } = await supabase
       .from('templates')
       .select('id, name, subject_code')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (templateError) throw templateError;
@@ -25,14 +27,14 @@ export async function GET(
     const { count: templateRowCount, error: countError } = await supabase
       .from('template_rows')
       .select('*', { count: 'exact', head: true })
-      .eq('template_id', params.id);
+      .eq('template_id', id);
 
     if (countError) throw countError;
 
     // Get detailed usage
     const { data: usage, error: usageError } = await supabase.rpc(
       'get_template_usage_details',
-      { template_id_param: params.id },
+      { template_id_param: id },
     );
 
     if (usageError) throw usageError;
