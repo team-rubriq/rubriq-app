@@ -34,7 +34,7 @@ export default function StatisticsCard({ stats }: Props) {
             <BarChart3 className="h-4 w-4" />
             <span>Total Rows Linked</span>
           </div>
-          <Badge variant="secondary">
+          <Badge variant="outline">
             {stats.total_rubric_rows_using_template}
           </Badge>
         </div>
@@ -44,7 +44,7 @@ export default function StatisticsCard({ stats }: Props) {
             <Layers className="h-4 w-4" />
             <span>Total Rubrics Linked</span>
           </div>
-          <Badge variant="secondary">
+          <Badge variant="outline">
             {stats.unique_rubrics_using_template}
           </Badge>
         </div>

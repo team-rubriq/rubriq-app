@@ -14,10 +14,7 @@ import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
   BarChart3,
-  Users,
   Layers,
-  Eye,
-  TrendingUp,
   Rows3,
   Zap,
   Link2,
@@ -244,10 +241,9 @@ export default function TemplateStatisticsDetail({ templateId }: Props) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">
-                        {usage.rows_from_template}
+                      <Badge variant="outline">
+                        {usage.rows_from_template} rows linked
                       </Badge>
-                      <Eye className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
                 ))}
