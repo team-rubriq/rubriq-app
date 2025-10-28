@@ -37,42 +37,33 @@ export default defineConfig({
     // tests without authenticated state (login/signup)
     {
       name: 'chromium-unauth',
-      testMatch: /.*\.(signin|signup|)\.spec\.ts/,
+      testMatch: /.*\.(signin|signup)\.spec\.ts$/,
       use: { 
         ...devices['Desktop Chrome'],
-        // Use prepared auth state.
-        storageState: 'playwright/.auth/user.json',
       },
-      dependencies: ['setup'],
     },
 
     {
       name: 'firefox-unauth',
-      testMatch: /.*\.(signin|signup|)\.spec\.ts/,
+      testMatch: /.*\.(signin|signup)\.spec\.ts$/,
       use: {
         ...devices['Desktop Firefox'],
-        // Use prepared auth state.
-        storageState: 'playwright/.auth/user.json',
       },
-      dependencies: ['setup'],
     },
 
     {
       name: 'webkit-unauth',
-      testMatch: /.*\.(signin|signup|)\.spec\.ts/,
+      testMatch: /.*\.(signin|signup)\.spec\.ts$/,
       use: {
         ...devices['Desktop Safari'],
-        // Use prepared auth state.
-        storageState: 'playwright/.auth/user.json',
       },
-      dependencies: ['setup'],
     },
     // Setup project (auth for login state)
-    { name: 'setup', testMatch: /.*\.setup\.ts/ },
+    { name: 'setup', testMatch: /.*\.setup\.ts$/ },
     // tests with authenticated state
     {
       name: 'chromium',
-      testIgnore: /.*\.(signin|signup|)\.spec\.ts/,
+      testIgnore: /.*\.(signin|signup)\.spec\.ts$/,
       use: { 
         ...devices['Desktop Chrome'],
         // Use prepared auth state.
@@ -83,7 +74,7 @@ export default defineConfig({
 
     {
       name: 'firefox',
-      testIgnore: /.*\.(signin|signup|)\.spec\.ts/,
+      testIgnore: /.*\.(signin|signup)\.spec\.ts$/,
       use: {
         ...devices['Desktop Firefox'],
         // Use prepared auth state.
@@ -94,7 +85,7 @@ export default defineConfig({
 
     {
       name: 'webkit',
-      testIgnore: /.*\.(signin|signup|)\.spec\.ts/,
+      testIgnore: /.*\.(signin|signup)\.spec\.ts$/,
       use: {
         ...devices['Desktop Safari'],
         // Use prepared auth state.
