@@ -20,7 +20,6 @@ setup('authenticate', async ({ page }) => {
   await page.getByLabel('password').fill(password || '');
   await page.getByRole('button', { name: 'Sign in' }).click();
   // Wait until the page receives the cookies.
-  //
   // Sometimes login flow sets cookies in the process of several redirects.
   // Wait for the final URL to ensure that the cookies are actually set.
   await page.waitForURL('/my-rubrics');

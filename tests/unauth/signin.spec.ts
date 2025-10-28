@@ -3,9 +3,26 @@ import { test, expect } from '@playwright/test';
 // Tests without signing in first
 
 // Login tests
-test('login exists', async ({ page }) => {
+test('signin exists', async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL("/signin");
+});
+
+test('Signin page elements', async ({ page }) => {
+  await page.goto('/');
+  // Logo and title
+  await expect(page.locator('img[alt="Logo"]')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Rubriq.' })).toBeVisible();
+  await expect(page.getByText('Welcome back! Please sign in to view your rubrics.')).toBeVisible();
+  // Form
+  await expect(page.getByLabel('email')).toBeVisible();
+  await expect(page.getByLabel('password')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+
+  await expect(page.getByLabel('password')).toHaveAttribute('type', 'password');
+  
+  await expect(page.getByRole('button', { name: 'Create New Account' })).toBeVisible();
+
 });
 
 test('login form submission', async ({ page }) => {
@@ -18,14 +35,11 @@ test('login form submission', async ({ page }) => {
   await page.getByLabel('password').fill(password || '');
   await page.getByRole('button', { name: 'Sign in' }).click();
   // Wait until the page receives the cookies.
-  //
   // Sometimes login flow sets cookies in the process of several redirects.
   // Wait for the final URL to ensure that the cookies are actually set.
   await page.waitForURL('/my-rubrics');
 
   // End of authentication steps.
-
-  await page.context().storageState({ path: authFile });
 });
 
 // Signup Tests

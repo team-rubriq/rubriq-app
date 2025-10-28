@@ -11,6 +11,7 @@ import {
   ChevronUp,
   LogOut,
   Settings,
+  BarChart3,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -29,6 +30,7 @@ import icon from '@/../public/icon.svg';
 const links = [
   { href: '/my-rubrics', label: 'My Rubrics', icon: TableProperties },
   { href: '/templates', label: 'Templates', icon: PackageOpen },
+  { href: '/statistics', label: 'Statistics', icon: BarChart3 },
 ];
 
 interface SidebarNavProps {
@@ -67,22 +69,24 @@ export default function SidebarNav({
 
         {/* Navigation */}
         <nav className="flex flex-col gap-2 p-4 text-sm">
-          {links.map(({ href, label, icon: Icon }) => (
-            <Button
-              key={href}
-              asChild
-              variant={pathname === href ? 'secondary' : 'ghost'}
-              className={cn(
-                'flex items-center gap-3 justify-start px-3 py-2 rounded',
-                pathname === href && 'font-bold shadow',
-              )}
-            >
-              <Link href={href}>
-                <Icon size={18} />
-                <span>{label}</span>
-              </Link>
-            </Button>
-          ))}
+          {links
+            .filter(({ href }) => href !== '/statistics' || role === 'admin')
+            .map(({ href, label, icon: Icon }) => (
+              <Button
+                key={href}
+                asChild
+                variant={pathname === href ? 'secondary' : 'ghost'}
+                className={cn(
+                  'flex items-center gap-3 justify-start px-3 py-2 rounded',
+                  pathname === href && 'font-bold shadow',
+                )}
+              >
+                <Link href={href}>
+                  <Icon size={18} />
+                  <span>{label}</span>
+                </Link>
+              </Button>
+            ))}
         </nav>
       </div>
 

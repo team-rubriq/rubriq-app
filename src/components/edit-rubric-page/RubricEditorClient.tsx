@@ -1,3 +1,5 @@
+// components/edit-rubric-page/RubricEditorClient.tsx
+
 'use client';
 
 import * as React from 'react';
@@ -9,7 +11,7 @@ import { toast } from 'sonner';
 import { Rubric, RubricTemplate, RubricRow } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import * as XLSX from 'xlsx-js-style';
-import { Save, Undo, Download } from 'lucide-react';
+import { Save, Undo, Download, Eye } from 'lucide-react';
 import EditRubricTable from './EditRubricTable';
 import TemplateUpdatesSheet from './TemplateUpdatesSheet';
 import { RubricAPI } from '@/lib/api';
@@ -17,11 +19,13 @@ import { RubricAPI } from '@/lib/api';
 interface Props {
   initialRubric: Rubric;
   linkedTemplate: RubricTemplate | null;
+  readOnly?: boolean;
 }
 
 export default function RubricEditorClient({
   initialRubric,
   linkedTemplate,
+  readOnly = false,
 }: Props) {
   const router = useRouter();
 
@@ -30,8 +34,9 @@ export default function RubricEditorClient({
   const [saving, setSaving] = React.useState(false);
   const [updatesOpen, setUpdatesOpen] = React.useState(false);
 
-  // unsaved-changes guard on hard navigation/refresh
+  // unsaved-changes guard on hard navigation/refresh (only if not read-only)
   React.useEffect(() => {
+    if (readOnly) return;
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!dirty) return;
       e.preventDefault();
@@ -39,10 +44,11 @@ export default function RubricEditorClient({
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [dirty]);
+  }, [dirty, readOnly]);
 
-  // keyboard shortcuts: Cmd/Ctrl+S to save
+  // keyboard shortcuts: Cmd/Ctrl+S to save (only if not read-only)
   React.useEffect(() => {
+    if (readOnly) return;
     const onKey = (e: KeyboardEvent) => {
       const cmd = e.metaKey || e.ctrlKey;
       if (cmd && e.key.toLowerCase() === 's') {
@@ -52,16 +58,18 @@ export default function RubricEditorClient({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [rubric]);
+  }, [rubric, readOnly]);
 
   // Header field handlers
   const setName = (name: string) => {
+    if (readOnly) return;
     setDirty(true);
     setRubric((r) => ({ ...r, name }));
   };
 
   // Rows handlers
   const onRowsChange = (rows: RubricRow[]) => {
+    if (readOnly) return;
     const normalized = rows.map((row, i) => ({ ...row, position: i }));
     setDirty(true);
     setRubric((r) => ({ ...r, rows: normalized, rowCount: normalized.length }));
@@ -69,6 +77,7 @@ export default function RubricEditorClient({
 
   // Save: PATCH, then RPC, then refetch
   const handleSave = async () => {
+    if (readOnly) return;
     try {
       setSaving(true);
 
@@ -94,6 +103,7 @@ export default function RubricEditorClient({
   };
 
   const handleRevert = async () => {
+    if (readOnly) return;
     try {
       const fresh = await RubricAPI.get(rubric.id);
       setRubric(fresh);
@@ -239,7 +249,7 @@ export default function RubricEditorClient({
 
   // Handle template updates via RPC, then refetch
   const handleApplyTemplateUpdates = async (selectedRowIds: string[]) => {
-    if (!selectedRowIds.length) return;
+    if (readOnly || !selectedRowIds.length) return;
     try {
       await RubricAPI.applyTemplateUpdates(rubric.id, selectedRowIds);
       const fresh = await RubricAPI.get(rubric.id);
@@ -254,12 +264,23 @@ export default function RubricEditorClient({
 
   // Compute availability of template updates from props
   const hasTemplateUpdates =
+    !readOnly &&
     rubric.status === 'update-available' &&
     linkedTemplate &&
     linkedTemplate.version > (rubric.templateVersion ?? 0);
 
   return (
     <div className="space-y-6">
+      {/* Read-only banner */}
+      {readOnly && (
+        <div className="bg-muted border-b">
+          <div className="mx-auto max-w-screen-xl px-4 py-3 flex items-center gap-2 text-sm text-muted-foreground">
+            <Eye className="h-4 w-4" />
+            <span>Viewing in read-only mode</span>
+          </div>
+        </div>
+      )}
+
       {/* Sticky header */}
       <div className="sticky top-0 z-20 bg-background/70 backdrop-blur-md border-b">
         <div className="mx-auto max-w-screen-xl px-4 py-3 flex items-center gap-3">
@@ -267,27 +288,33 @@ export default function RubricEditorClient({
             className="text-xl font-semibold h-10"
             value={rubric.name}
             onChange={(e) => setName(e.target.value)}
+            readOnly={readOnly}
+            disabled={readOnly}
           />
           <Input className="w-40" value={rubric.subjectCode} readOnly />
           <div className="ml-auto flex items-center gap-2">
-            <span title="Revert Changes">
-              <Button
-                variant={'ghost'}
-                onClick={handleRevert}
-                disabled={saving}
-              >
-                <Undo className="" />
-              </Button>
-            </span>
-            <span title="Save">
-              <Button
-                variant={'ghost'}
-                onClick={handleSave}
-                disabled={saving || !dirty}
-              >
-                <Save className="" />
-              </Button>
-            </span>
+            {!readOnly && (
+              <>
+                <span title="Revert Changes">
+                  <Button
+                    variant={'ghost'}
+                    onClick={handleRevert}
+                    disabled={saving}
+                  >
+                    <Undo className="" />
+                  </Button>
+                </span>
+                <span title="Save">
+                  <Button
+                    variant={'ghost'}
+                    onClick={handleSave}
+                    disabled={saving || !dirty}
+                  >
+                    <Save className="" />
+                  </Button>
+                </span>
+              </>
+            )}
             <span title="Export (.xlsx)">
               <Button variant={'ghost'} onClick={handleExport}>
                 <Download className="" />
@@ -347,6 +374,7 @@ export default function RubricEditorClient({
           onChange={onRowsChange}
           templateRows={linkedTemplate?.rows ?? []}
           dirty={dirty}
+          readOnly={readOnly}
         />
       </div>
 
