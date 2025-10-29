@@ -37,25 +37,28 @@ export default defineConfig({
     // tests without authenticated state (login/signup)
     {
       name: 'chromium-unauth',
-      testMatch: /.*\.(signin|signup)\.spec\.ts$/,
+      testMatch: /.*\/(unauth)\/.*\.spec\.ts$/,
       use: { 
         ...devices['Desktop Chrome'],
+        storageState: { cookies: [], origins: [] }
       },
     },
 
     {
       name: 'firefox-unauth',
-      testMatch: /.*\.(signin|signup)\.spec\.ts$/,
+      testMatch: /.*\/(unauth)\/.*\.spec\.ts$/,
       use: {
         ...devices['Desktop Firefox'],
+        storageState: { cookies: [], origins: [] }
       },
     },
 
     {
       name: 'webkit-unauth',
-      testMatch: /.*\.(signin|signup)\.spec\.ts$/,
+      testMatch: /.*\/(unauth)\/.*\.spec\.ts$/,
       use: {
         ...devices['Desktop Safari'],
+        storageState: { cookies: [], origins: [] }
       },
     },
     // Setup project (auth for login state)
@@ -63,7 +66,7 @@ export default defineConfig({
     // tests with authenticated state
     {
       name: 'chromium',
-      testIgnore: /.*\.(signin|signup)\.spec\.ts$/,
+      testIgnore: /.*\/(unauth)\/.*\.spec\.ts$/,
       use: { 
         ...devices['Desktop Chrome'],
         // Use prepared auth state.
@@ -74,7 +77,7 @@ export default defineConfig({
 
     {
       name: 'firefox',
-      testIgnore: /.*\.(signin|signup)\.spec\.ts$/,
+      testIgnore: /.*\/(unauth)\/.*\.spec\.ts$/,
       use: {
         ...devices['Desktop Firefox'],
         // Use prepared auth state.
@@ -85,7 +88,7 @@ export default defineConfig({
 
     {
       name: 'webkit',
-      testIgnore: /.*\.(signin|signup)\.spec\.ts$/,
+      testIgnore: /.*\/(unauth)\/.*\.spec\.ts$/,
       use: {
         ...devices['Desktop Safari'],
         // Use prepared auth state.

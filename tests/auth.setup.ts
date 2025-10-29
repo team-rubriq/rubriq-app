@@ -3,7 +3,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 
 if (!process.env.TEST_USER_EMAIL) {
-  dotenv.config({ path: path.resolve(__dirname, '.env.test') });
+  dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 }
 
 // https://playwright.dev/docs/auth
