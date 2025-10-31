@@ -83,7 +83,7 @@ export async function DELETE(
   // soft delete
   const { error: delErr } = await supabase
     .from('rubrics')
-    .update({ deleted_at: new Date().toISOString() })
+    .delete()
     .eq('id', id);
 
   if (delErr)
